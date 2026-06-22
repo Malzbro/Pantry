@@ -34,7 +34,7 @@ def current_user_id(
         payload = jwt.decode(
             creds.credentials,
             signing_key.key,
-            algorithms=["RS256"],
+            algorithms=["RS256", "ES256"],
             audience="authenticated",
         )
         return UUID(payload["sub"])
