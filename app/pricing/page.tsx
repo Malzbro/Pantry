@@ -39,9 +39,11 @@ const plans = [
 export default function PricingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubscribe = async (tier: "monthly" | "yearly") => {
     setLoading(tier)
+    setError(null)
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -53,7 +55,8 @@ export default function PricingPage() {
 
       const { url } = await createCheckoutSession(tier)
       window.location.href = url
-    } catch {
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong")
       setLoading(null)
     }
   }
@@ -75,6 +78,12 @@ export default function PricingPage() {
             Start free. Upgrade when you need more.
           </p>
         </div>
+
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6 p-4 border border-accent rounded-md text-accent text-sm">
+            {error}
+          </div>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
           {plans.map((plan) => (
