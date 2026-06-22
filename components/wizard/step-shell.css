@@ -1,0 +1,59 @@
+.step-content {
+  animation: step-enter-forward 400ms ease-out both;
+}
+
+[data-exiting="forward"] .step-content {
+  animation: step-exit-forward 250ms ease-in both;
+}
+
+[data-exiting="back"] .step-content {
+  animation: step-exit-back 250ms ease-in both;
+}
+
+[data-entering="back"] .step-content {
+  animation: step-enter-back 400ms ease-out both;
+}
+
+@keyframes step-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes step-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes step-exit-forward {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes step-exit-back {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
