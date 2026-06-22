@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { PlannerWizard } from "@/components/PlannerWizard"
 import { PlanView } from "@/components/PlanView"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
@@ -8,8 +9,10 @@ import { RecipeModal } from "@/components/RecipeModal"
 import { createPlan, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { createClient } from "@/utils/supabase/client"
 
-export function PlannerApp() {
+export function PlannerApp({ userEmail }: { userEmail: string }) {
+  const router = useRouter()
   const [plan, setPlan] = useState<PlanResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +56,21 @@ export function PlannerApp() {
       <header className="border-b border-line">
         <div className="container py-4 flex items-center justify-between">
           <p className="font-display text-lg text-ink">Pantry</p>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted hidden sm:inline">{userEmail}</span>
+            <ThemeToggle />
+            <button
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                router.push("/sign-in")
+                router.refresh()
+              }}
+              className="text-xs text-muted hover:text-ink underline"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 

@@ -1,10 +1,12 @@
 """GET /recipes/{id} — fetch a single recipe with full details."""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
+from api.deps import get_db, current_user_id
 from db.queries import get_recipe_by_id
 
 
@@ -38,7 +40,7 @@ class RecipeDetail(BaseModel):
 
 
 @router.get("/recipes/{recipe_id}", response_model=RecipeDetail)
-def get_recipe(recipe_id: int, db: Session = Depends(get_db)) -> RecipeDetail:
+def get_recipe(recipe_id: int, db: Session = Depends(get_db), _user: UUID = Depends(current_user_id)) -> RecipeDetail:
     recipe = get_recipe_by_id(db, recipe_id)
     if recipe is None:
         raise HTTPException(status_code=404, detail=f"Recipe {recipe_id} not found")

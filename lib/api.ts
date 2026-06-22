@@ -1,4 +1,16 @@
+import { createClient } from "@/utils/supabase/client"
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`
+  }
+  return headers
+}
 
 export type PlanRequest = {
   weekly_budget_gbp: number
@@ -67,7 +79,7 @@ export type ShoppingList = {
 export async function createPlan(req: PlanRequest): Promise<PlanResponse> {
   const r = await fetch(`${BASE_URL}/plan`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await authHeaders(),
     body: JSON.stringify(req),
   })
   if (!r.ok) throw new Error(`Plan request failed: ${r.status}`)
@@ -75,7 +87,9 @@ export async function createPlan(req: PlanRequest): Promise<PlanResponse> {
 }
 
 export async function getRecipe(id: number): Promise<RecipeDetail> {
-  const r = await fetch(`${BASE_URL}/recipes/${id}`)
+  const r = await fetch(`${BASE_URL}/recipes/${id}`, {
+    headers: await authHeaders(),
+  })
   if (!r.ok) throw new Error(`Recipe request failed: ${r.status}`)
   return r.json()
 }
@@ -87,7 +101,7 @@ export async function swapMeal(args: {
 }): Promise<PlannedMeal> {
   const r = await fetch(`${BASE_URL}/swap`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await authHeaders(),
     body: JSON.stringify(args),
   })
   if (!r.ok) throw new Error(`Swap failed: ${r.status}`)
@@ -100,7 +114,7 @@ export async function getShoppingList(args: {
 }): Promise<ShoppingList> {
   const r = await fetch(`${BASE_URL}/shopping-list`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: await authHeaders(),
     body: JSON.stringify(args),
   })
   if (!r.ok) throw new Error(`Shopping list failed: ${r.status}`)

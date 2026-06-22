@@ -1,10 +1,12 @@
 """POST /shopping-list — aggregate ingredients across a list of recipes."""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from api.deps import get_db
+from api.deps import get_db, current_user_id
 from db.queries import get_recipe_by_id
 from planner.shopping import aggregate_shopping_list
 
@@ -39,6 +41,7 @@ class ShoppingListResponse(BaseModel):
 def make_shopping_list(
     request: ShoppingListRequest,
     db: Session = Depends(get_db),
+    _user: UUID = Depends(current_user_id),
 ) -> ShoppingListResponse:
     recipes_with_servings = []
     for recipe_id in request.recipe_ids:
