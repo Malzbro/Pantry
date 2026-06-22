@@ -110,6 +110,12 @@ class Profile(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True)
     display_name = Column(Text, nullable=True)
+    email = Column(Text, nullable=True)
+    stripe_customer_id = Column(Text, nullable=True, unique=True, index=True)
+    subscription_status = Column(Text, nullable=True)
+    subscription_tier = Column(Text, nullable=True)
+    subscription_current_period_end = Column(DateTime(timezone=True), nullable=True)
+    subscription_cancel_at_period_end = Column(Boolean, nullable=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

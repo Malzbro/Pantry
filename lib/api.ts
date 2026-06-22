@@ -120,3 +120,22 @@ export async function getShoppingList(args: {
   if (!r.ok) throw new Error(`Shopping list failed: ${r.status}`)
   return r.json()
 }
+
+export async function createCheckoutSession(tier: "monthly" | "yearly"): Promise<{ url: string }> {
+  const r = await fetch(`${BASE_URL}/billing/checkout`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ tier }),
+  })
+  if (!r.ok) throw new Error(`Checkout failed: ${r.status}`)
+  return r.json()
+}
+
+export async function createPortalSession(): Promise<{ url: string }> {
+  const r = await fetch(`${BASE_URL}/billing/portal`, {
+    method: "POST",
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Portal session failed: ${r.status}`)
+  return r.json()
+}
