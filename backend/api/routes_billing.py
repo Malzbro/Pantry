@@ -29,7 +29,36 @@ class CheckoutRequest(BaseModel):
     tier: str  # "monthly" | "yearly"
 
 
+class EntitlementResponse(BaseModel):
+    tier: str | None
+    status: str | None
+    is_premium: bool
+    cancel_at_period_end: bool
+
+
 # ── Authenticated endpoints ──────────────────────────────────────────────
+
+
+@router.get("/billing/entitlement", response_model=EntitlementResponse)
+def get_entitlement(
+    user_id: UUID = Depends(current_user_id),
+    db: Session = Depends(get_db),
+):
+    profile = db.query(Profile).filter(Profile.id == user_id).first()
+    if not profile:
+        return EntitlementResponse(
+            tier=None, status=None, is_premium=False, cancel_at_period_end=False,
+        )
+    is_premium = (
+        profile.subscription_status == "active"
+        and profile.subscription_tier in PRICE_TO_TIER.values()
+    )
+    return EntitlementResponse(
+        tier=profile.subscription_tier,
+        status=profile.subscription_status,
+        is_premium=is_premium,
+        cancel_at_period_end=profile.subscription_cancel_at_period_end,
+    )
 
 
 @router.post("/billing/checkout")

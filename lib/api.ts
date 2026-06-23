@@ -121,6 +121,21 @@ export async function getShoppingList(args: {
   return r.json()
 }
 
+export type Entitlement = {
+  tier: string | null
+  status: string | null
+  is_premium: boolean
+  cancel_at_period_end: boolean
+}
+
+export async function getEntitlement(): Promise<Entitlement> {
+  const r = await fetch(`${BASE_URL}/billing/entitlement`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Entitlement check failed: ${r.status}`)
+  return r.json()
+}
+
 export async function createCheckoutSession(tier: "monthly" | "yearly"): Promise<{ url: string }> {
   const r = await fetch(`${BASE_URL}/billing/checkout`, {
     method: "POST",
