@@ -71,3 +71,44 @@ function shouldCache(url) {
     url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff2?)$/)
   );
 }
+
+// ── Push notifications ─────────────────────────────────────────────────
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "Pantry", body: event.data.text() };
+  }
+
+  const { title = "Pantry", body = "", url, icon, badge } = payload;
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: icon || "/icon-192.png",
+      badge: badge || "/icon-192.png",
+      data: { url: url || "/" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (new URL(client.url).pathname === targetUrl && "focus" in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })
+  );
+});

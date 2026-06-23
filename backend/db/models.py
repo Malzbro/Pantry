@@ -187,3 +187,17 @@ class PlanMeal(Base):
     recipe_id = Column(Integer, ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True)
 
     plan = relationship("Plan", back_populates="meals")
+
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+    __table_args__ = (
+        Index("ix_push_subscriptions_user_id", "user_id"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    user_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    endpoint = Column(Text, nullable=False, unique=True)
+    key_p256dh = Column(Text, nullable=False)
+    key_auth = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

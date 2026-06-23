@@ -154,3 +154,39 @@ export async function createPortalSession(): Promise<{ url: string }> {
   if (!r.ok) throw new Error(`Portal session failed: ${r.status}`)
   return r.json()
 }
+
+// ── Push notifications ─────────────────────────────────────────────────
+
+export async function subscribePush(subscription: PushSubscription): Promise<void> {
+  const key = subscription.getKey("p256dh")
+  const auth = subscription.getKey("auth")
+  if (!key || !auth) throw new Error("Missing push subscription keys")
+
+  const r = await fetch(`${BASE_URL}/push/subscribe`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({
+      endpoint: subscription.endpoint,
+      key_p256dh: btoa(String.fromCharCode(...new Uint8Array(key))),
+      key_auth: btoa(String.fromCharCode(...new Uint8Array(auth))),
+    }),
+  })
+  if (!r.ok) throw new Error(`Push subscribe failed: ${r.status}`)
+}
+
+export async function unsubscribePush(endpoint: string): Promise<void> {
+  const r = await fetch(`${BASE_URL}/push/unsubscribe`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ endpoint }),
+  })
+  if (!r.ok) throw new Error(`Push unsubscribe failed: ${r.status}`)
+}
+
+export async function getPushStatus(): Promise<{ subscribed: boolean; subscription_count: number }> {
+  const r = await fetch(`${BASE_URL}/push/status`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Push status failed: ${r.status}`)
+  return r.json()
+}
