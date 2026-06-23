@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import stripe_client  # noqa: F401 — module-level init sets stripe.api_key
+import email_service
+import email_templates
 
 from api.deps import get_db, current_user_id
 from db.models import Profile
@@ -162,6 +164,31 @@ def _handle_checkout_completed(session_obj: dict, db: Session):
         return
 
     logger.info("Checkout completed for profile %s", profile.id)
+
+    if profile.email:
+        sub_id = session_obj.get("subscription")
+        tier = "monthly"
+        amount = ""
+        period_end = ""
+        if sub_id:
+            try:
+                sub = stripe.Subscription.retrieve(sub_id)
+                items = sub.get("items", {}).get("data", [])
+                if items:
+                    price_id = items[0].get("price", {}).get("id", "")
+                    tier = PRICE_TO_TIER.get(price_id, "premium")
+                    unit = items[0].get("price", {}).get("unit_amount", 0)
+                    amount = f"£{unit / 100:.2f}"
+                end_ts = sub.get("current_period_end")
+                if end_ts:
+                    period_end = datetime.fromtimestamp(end_ts, tz=timezone.utc).strftime("%d %B %Y")
+            except Exception:
+                logger.exception("Failed to fetch subscription details for receipt email")
+
+        subject, html = email_templates.subscription_receipt(
+            profile.email, tier, amount, period_end,
+        )
+        email_service.send(profile.email, subject, html)
 
 
 def _handle_subscription_change(subscription: dict, db: Session):
