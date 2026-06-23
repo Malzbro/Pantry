@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeScript } from "@/components/ThemeScript"
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration"
 import { InstallPrompt } from "@/components/InstallPrompt"
+import { PushPrompt } from "@/components/PushPrompt"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -74,6 +75,7 @@ export default function RootLayout({
         {children}
         <ServiceWorkerRegistration />
         <InstallPrompt />
+        <PushPrompt />
       </body>
     </html>
   )

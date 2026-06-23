@@ -139,6 +139,12 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+
+        <p className="mt-10 text-xs text-muted text-center">
+          <Link href="/terms" className="underline hover:text-ink">Terms</Link>
+          {" · "}
+          <Link href="/privacy" className="underline hover:text-ink">Privacy Policy</Link>
+        </p>
       </main>
     </div>
   )
