@@ -5,8 +5,10 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+_db_url = os.environ["DATABASE_URL"].replace("postgresql://", "postgresql+psycopg://", 1)
+
 engine = create_engine(
-    os.environ["DATABASE_URL"],
+    _db_url,
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,

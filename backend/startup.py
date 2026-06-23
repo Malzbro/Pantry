@@ -97,6 +97,7 @@ def seed_dev_user(url: str) -> None:
 
 def main():
     db_url = os.environ["DATABASE_URL"]
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
     print(f"[startup] DATA_DIR = {DATA_DIR}")
 
     # 1. Wait for Postgres
