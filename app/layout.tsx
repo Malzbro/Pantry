@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { ThemeScript } from "@/components/ThemeScript"
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration"
+import { InstallPrompt } from "@/components/InstallPrompt"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -68,7 +70,11 @@ export default function RootLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <ServiceWorkerRegistration />
+        <InstallPrompt />
+      </body>
     </html>
   )
 }

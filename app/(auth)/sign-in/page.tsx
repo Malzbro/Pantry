@@ -1,11 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/client"
 
 export default function SignIn() {
+  return (
+    <Suspense>
+      <SignInInner />
+    </Suspense>
+  )
+}
+
+function SignInInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect")
