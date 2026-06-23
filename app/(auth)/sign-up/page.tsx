@@ -114,6 +114,13 @@ export default function SignUp() {
         Already have an account?{" "}
         <Link href="/sign-in" className="underline hover:text-ink">Sign in</Link>
       </p>
+
+      <p className="mt-4 text-xs text-muted text-center">
+        By signing up you agree to our{" "}
+        <Link href="/terms" className="underline hover:text-ink">Terms</Link>
+        {" "}and{" "}
+        <Link href="/privacy" className="underline hover:text-ink">Privacy Policy</Link>.
+      </p>
     </>
   )
 }
