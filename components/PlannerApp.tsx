@@ -9,9 +9,19 @@ import { RecipeModal } from "@/components/RecipeModal"
 import { createPlan, createPortalSession, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { SubscriptionProvider, useSubscription } from "@/components/SubscriptionContext"
 import { createClient } from "@/utils/supabase/client"
 
 export function PlannerApp({ userEmail }: { userEmail: string }) {
+  return (
+    <SubscriptionProvider>
+      <PlannerAppInner userEmail={userEmail} />
+    </SubscriptionProvider>
+  )
+}
+
+function PlannerAppInner({ userEmail }: { userEmail: string }) {
+  const { isPremium } = useSubscription()
   const router = useRouter()
   const [plan, setPlan] = useState<PlanResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -59,19 +69,28 @@ export function PlannerApp({ userEmail }: { userEmail: string }) {
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted hidden sm:inline">{userEmail}</span>
             <ThemeToggle />
-            <button
-              onClick={async () => {
-                try {
-                  const { url } = await createPortalSession()
-                  window.location.href = url
-                } catch {
-                  router.push("/pricing")
-                }
-              }}
-              className="text-xs text-muted hover:text-ink underline"
-            >
-              Manage subscription
-            </button>
+            {isPremium ? (
+              <button
+                onClick={async () => {
+                  try {
+                    const { url } = await createPortalSession()
+                    window.location.href = url
+                  } catch {
+                    router.push("/pricing")
+                  }
+                }}
+                className="text-xs text-muted hover:text-ink underline"
+              >
+                Manage subscription
+              </button>
+            ) : (
+              <a
+                href="/pricing"
+                className="text-xs text-accent hover:underline font-medium"
+              >
+                Upgrade
+              </a>
+            )}
             <button
               onClick={async () => {
                 const supabase = createClient()
