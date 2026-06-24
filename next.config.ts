@@ -4,8 +4,8 @@ import { withSentryConfig } from "@sentry/nextjs"
 const nextConfig: NextConfig = {}
 
 export default withSentryConfig(nextConfig, {
-  org: "pantry-app",
-  project: "pantry-web",
+  org: "pantry-cs",
+  project: "javascript-nextjs",
   silent: !process.env.CI,
   tunnelRoute: "/monitoring",
   widenClientFileUpload: true,
