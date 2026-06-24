@@ -1,15 +1,22 @@
-"""Account endpoints: GDPR data export."""
+"""Account endpoints: GDPR data export and deletion."""
 
+import logging
 from uuid import UUID
 
+import stripe
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+import stripe_client  # noqa: F401
 
 from api.deps import get_db, current_user_id
 from db.models import (
     Profile, Household, HouseholdMember, Plan, PlanMeal, PushSubscription,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["account"])
 
@@ -118,3 +125,53 @@ def export_data(
         content=export,
         headers={"Content-Disposition": "attachment; filename=pantry-data-export.json"},
     )
+
+
+@router.delete("/account")
+def delete_account(
+    user_id: UUID = Depends(current_user_id),
+    db: Session = Depends(get_db),
+):
+    profile = db.query(Profile).filter(Profile.id == user_id).first()
+    if not profile:
+        return {"deleted": True}
+
+    # Cancel Stripe subscription and delete customer
+    if profile.stripe_customer_id:
+        try:
+            subs = stripe.Subscription.list(
+                customer=profile.stripe_customer_id, status="active", limit=100,
+            )
+            for sub in subs.auto_paging_iter():
+                stripe.Subscription.cancel(sub.id)
+            stripe.Customer.delete(profile.stripe_customer_id)
+        except stripe.StripeError:
+            logger.exception("Stripe cleanup failed for customer %s", profile.stripe_customer_id)
+
+    # Delete push subscriptions
+    db.query(PushSubscription).filter(PushSubscription.user_id == user_id).delete()
+
+    # Find households where this user is the sole member — delete them entirely
+    user_households = (
+        db.query(HouseholdMember.household_id)
+        .filter(HouseholdMember.user_id == user_id)
+    )
+    sole_household_ids = (
+        db.query(HouseholdMember.household_id)
+        .filter(HouseholdMember.household_id.in_(user_households))
+        .group_by(HouseholdMember.household_id)
+        .having(func.count(HouseholdMember.user_id) == 1)
+        .subquery()
+    )
+    # PlanMeals cascade from Plans, Plans cascade from Households
+    db.query(Household).filter(Household.id.in_(sole_household_ids)).delete(synchronize_session="fetch")
+
+    # Remove memberships from any shared households
+    db.query(HouseholdMember).filter(HouseholdMember.user_id == user_id).delete()
+
+    # Delete the profile
+    db.delete(profile)
+    db.commit()
+
+    logger.info("Account deleted for user %s", user_id)
+    return {"deleted": True}

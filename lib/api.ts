@@ -200,3 +200,11 @@ export async function exportUserData(): Promise<Blob> {
   if (!r.ok) throw new Error(`Data export failed: ${r.status}`)
   return r.blob()
 }
+
+export async function deleteAccount(): Promise<void> {
+  const r = await fetch(`${BASE_URL}/account`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Account deletion failed: ${r.status}`)
+}
