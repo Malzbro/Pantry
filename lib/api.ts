@@ -190,3 +190,13 @@ export async function getPushStatus(): Promise<{ subscribed: boolean; subscripti
   if (!r.ok) throw new Error(`Push status failed: ${r.status}`)
   return r.json()
 }
+
+// ── GDPR ──────────────────────────────────────────────────────────────
+
+export async function exportUserData(): Promise<Blob> {
+  const r = await fetch(`${BASE_URL}/account/export`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Data export failed: ${r.status}`)
+  return r.blob()
+}
