@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import posthog from "posthog-js"
 import type { RecipeDetail, PlannedMeal, PlanRequest } from "@/lib/api"
 import { getRecipe, swapMeal } from "@/lib/api"
 import { gbp as fmtGbp } from "@/lib/utils"
@@ -48,6 +49,7 @@ export function RecipeModal({ recipeId, planContext, currentMeals, onClose, onSw
       })
       const mealIndex = currentMeals.findIndex(m => m.recipe_id === recipeId)
       if (mealIndex >= 0) {
+        posthog.capture("meal_swapped", { reason: swapReason || undefined })
         onSwapped(mealIndex, newMeal)
         onClose()
       } else {

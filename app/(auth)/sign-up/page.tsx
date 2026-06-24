@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import posthog from "posthog-js"
 import { createClient } from "@/utils/supabase/client"
 
 export default function SignUp() {
@@ -29,6 +30,7 @@ export default function SignUp() {
       return
     }
 
+    posthog.capture("sign_up_submitted")
     setSuccess(true)
     setLoading(false)
   }
