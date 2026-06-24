@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import posthog from "posthog-js"
 import { createClient } from "@/utils/supabase/client"
 import { createCheckoutSession } from "@/lib/api"
 
@@ -54,6 +55,7 @@ export default function PricingPage() {
       }
 
       const { url } = await createCheckoutSession(tier)
+      posthog.capture("checkout_started", { tier })
       window.location.href = url
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong")

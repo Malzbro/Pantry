@@ -16,6 +16,7 @@ export function CookieConsent() {
 
   function accept(value: "all" | "essential") {
     localStorage.setItem(CONSENT_KEY, value)
+    window.dispatchEvent(new StorageEvent("storage", { key: CONSENT_KEY, newValue: value }))
     setVisible(false)
   }
 

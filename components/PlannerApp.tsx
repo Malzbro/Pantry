@@ -6,6 +6,7 @@ import { PlannerWizard } from "@/components/PlannerWizard"
 import { PlanView } from "@/components/PlanView"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
 import { RecipeModal } from "@/components/RecipeModal"
+import posthog from "posthog-js"
 import { createPlan, createPortalSession, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
 import { ThemeToggle } from "@/components/ThemeToggle"
@@ -39,6 +40,12 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       const result = await createPlan(req)
       setPlan(result)
       setShowReveal(true)
+      posthog.capture("plan_generated", {
+        budget_gbp: req.weekly_budget_gbp,
+        household_size: req.household_size,
+        meals_per_week: req.meals_per_week,
+        total_cost_gbp: result.total_cost_gbp,
+      })
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong")
     } finally {
