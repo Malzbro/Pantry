@@ -1,5 +1,6 @@
 """FastAPI dependency providers."""
 
+import logging
 import os
 from collections.abc import Generator
 from uuid import UUID
@@ -12,6 +13,8 @@ from sqlalchemy.orm import Session
 
 from db.session import SessionLocal
 from db.models import Profile
+
+logger = logging.getLogger(__name__)
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 _jwks_client = PyJWKClient(f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json")
@@ -41,7 +44,14 @@ def current_user_id(
             audience="authenticated",
         )
         return UUID(payload["sub"])
-    except (jwt.PyJWTError, KeyError, ValueError):
+    except (jwt.PyJWTError, KeyError, ValueError) as exc:
+        logger.error("JWT verification failed: %s: %s", type(exc).__name__, exc)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing authentication",
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error during JWT verification")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing authentication",
