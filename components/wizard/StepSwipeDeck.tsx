@@ -143,26 +143,24 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
       onBack={onBack}
       nextLabel={`Skip all (${SWIPE_RECIPES.length - currentIndex} left)`}
     >
-      <div className="relative w-full max-w-sm mx-auto" style={{ height: 420 }}>
+      <div className="relative w-full max-w-sm mx-auto rounded-xl overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
         {/* Next card (underneath) */}
         {nextRecipe && (
           <div className="absolute inset-0 rounded-xl overflow-hidden border border-line bg-chip scale-[0.96] opacity-60">
-            <div className="relative w-full h-48">
-              <Image
-                src={nextRecipe.imageUrl}
-                alt={nextRecipe.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 384px) 100vw, 384px"
-              />
-            </div>
+            <Image
+              src={nextRecipe.imageUrl}
+              alt={nextRecipe.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 384px) 100vw, 384px"
+            />
           </div>
         )}
 
         {/* Current card */}
         <div
           ref={cardRef}
-          className="absolute inset-0 rounded-xl overflow-hidden border border-line bg-bg shadow-lg cursor-grab active:cursor-grabbing select-none touch-none"
+          className="absolute inset-0 rounded-xl overflow-hidden border border-line shadow-lg cursor-grab active:cursor-grabbing select-none touch-none"
           style={{
             transform: animating === "right"
               ? "translateX(120%) rotate(15deg)"
@@ -177,48 +175,46 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {/* Image */}
-          <div className="relative w-full h-48">
-            <Image
-              src={recipe.imageUrl}
-              alt={recipe.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 384px) 100vw, 384px"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          {/* Full-bleed image */}
+          <Image
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 384px) 100vw, 384px"
+            priority
+          />
 
-            {/* Swipe indicators */}
-            <div
-              className="absolute top-4 right-4 bg-green-500 text-white font-bold px-3 py-1 rounded-lg text-sm border-2 border-green-400 rotate-12"
-              style={{ opacity: likeIndicatorOpacity, transition: dragging ? "none" : "opacity 150ms" }}
-            >
-              LIKE
-            </div>
-            <div
-              className="absolute top-4 left-4 bg-red-500 text-white font-bold px-3 py-1 rounded-lg text-sm border-2 border-red-400 -rotate-12"
-              style={{ opacity: skipIndicatorOpacity, transition: dragging ? "none" : "opacity 150ms" }}
-            >
-              SKIP
-            </div>
+          {/* Gradient overlay — stronger at bottom for text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+          {/* Swipe indicators */}
+          <div
+            className="absolute top-4 right-4 bg-green-500 text-white font-bold px-3 py-1 rounded-lg text-sm border-2 border-green-400 rotate-12"
+            style={{ opacity: likeIndicatorOpacity, transition: dragging ? "none" : "opacity 150ms" }}
+          >
+            LIKE
+          </div>
+          <div
+            className="absolute top-4 left-4 bg-red-500 text-white font-bold px-3 py-1 rounded-lg text-sm border-2 border-red-400 -rotate-12"
+            style={{ opacity: skipIndicatorOpacity, transition: dragging ? "none" : "opacity 150ms" }}
+          >
+            SKIP
           </div>
 
-          {/* Content */}
-          <div className="p-4 space-y-3">
-            <div>
-              <h3 className="font-display text-xl text-ink">{recipe.title}</h3>
-              <p className="text-sm text-muted mt-1">{recipe.description}</p>
-            </div>
+          {/* Content overlaid at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
+            <h3 className="font-display text-2xl text-white drop-shadow-md">{recipe.title}</h3>
+            <p className="text-sm text-white/80 leading-snug">{recipe.description}</p>
 
-            <div className="flex items-center gap-3 text-xs text-muted">
+            <div className="flex items-center gap-3 text-xs text-white/70">
               <span className="flex items-center gap-1">
                 <ClockIcon />
                 {recipe.prepMinutes} min
               </span>
               <span className="flex items-center gap-1">
                 <PoundIcon />
-                £{recipe.costPerServing.toFixed(2)}/serving
+                £{recipe.costPerServing.toFixed(2)}
               </span>
               <span className="flex items-center gap-1">
                 <FlameIcon />
@@ -226,12 +222,12 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-chip text-muted">
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white/90 backdrop-blur-sm">
                 {recipe.cuisine}
               </span>
               {recipe.tags.map(t => (
-                <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-chip text-muted">
+                <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white/90 backdrop-blur-sm">
                   {t.replace("_", " ")}
                 </span>
               ))}
