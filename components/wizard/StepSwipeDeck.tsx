@@ -159,6 +159,7 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
 
         {/* Current card */}
         <div
+          key={currentIndex}
           ref={cardRef}
           className="absolute inset-0 rounded-xl overflow-hidden border border-line shadow-lg cursor-grab active:cursor-grabbing select-none touch-none"
           style={{
