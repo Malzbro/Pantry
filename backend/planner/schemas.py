@@ -28,6 +28,14 @@ Appliance = Literal[
 ]
 
 
+class PreferenceVector(BaseModel):
+    spice: float = Field(..., ge=0, le=5)
+    sauce: float = Field(..., ge=0, le=5)
+    richness: float = Field(..., ge=0, le=5)
+    effort: float = Field(..., ge=0, le=5)
+    familiarity: float = Field(..., ge=0, le=5)
+
+
 class PlanRequest(BaseModel):
     weekly_budget_gbp: float = Field(..., gt=0, le=500)
     household_size: int = Field(..., gt=0, le=12)
@@ -37,8 +45,12 @@ class PlanRequest(BaseModel):
     preferred_cuisines: list[CuisineFilter] = Field(default_factory=list)
     preference_text: str = Field(
         default="",
-        max_length=500,
+        max_length=1000,
         description="Free-form preferences ('we like spicy food', 'lots of veg')"
+    )
+    preference_vector: PreferenceVector | None = Field(
+        default=None,
+        description="User taste profile axes (0-5 each), computed from onboarding swipe deck"
     )
     meals_per_week: int = Field(default=7, gt=0, le=21)
 

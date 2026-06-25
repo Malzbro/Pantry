@@ -20,6 +20,7 @@ export type PlanRequest = {
   excluded_appliances: string[]
   preferred_cuisines: string[]
   preference_text: string
+  preference_vector: { spice: number; sauce: number; richness: number; effort: number; familiarity: number } | null
   meals_per_week: number
 }
 
