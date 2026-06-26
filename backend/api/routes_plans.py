@@ -1,12 +1,13 @@
 """GET /plans — list and fetch persisted meal plans."""
 
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from api.deps import get_db, current_user_id
-from api.schemas import PlanSummary, PlanDetail, ActualCostUpdate, BudgetSummary, BudgetSummaryPlan
+from api.schemas import PlanSummary, PlanDetail, ActualCostUpdate, BudgetSummary, BudgetSummaryPlan, SavingsPeriod
 from db.models import Plan, HouseholdMember
 
 
@@ -53,6 +54,19 @@ def list_plans(
     ]
 
 
+def _savings_period(plans_in_period: list[tuple[float, float | None]]) -> SavingsPeriod:
+    projected = sum(p for p, _ in plans_in_period)
+    actuals = [a for _, a in plans_in_period if a is not None]
+    actual_total = sum(actuals) if actuals else None
+    saved = round(projected - actual_total, 2) if actual_total is not None else None
+    return SavingsPeriod(
+        projected_gbp=round(projected, 2),
+        actual_gbp=round(actual_total, 2) if actual_total is not None else None,
+        saved_gbp=saved,
+        plan_count=len(plans_in_period),
+    )
+
+
 @router.get("/plans/budget-summary", response_model=BudgetSummary)
 def budget_summary(
     limit: int = Query(default=12, ge=1, le=52),
@@ -69,10 +83,17 @@ def budget_summary(
         .all()
     )
 
+    now = datetime.now(timezone.utc)
+    week_start = now - timedelta(days=now.weekday())
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
     plans = []
     total_projected = 0.0
     total_actual = 0.0
     has_any_actual = False
+    week_plans: list[tuple[float, float | None]] = []
+    month_plans: list[tuple[float, float | None]] = []
 
     for p in rows:
         budget = p.request_payload.get("weekly_budget_gbp", 0) if p.request_payload else 0
@@ -94,11 +115,21 @@ def budget_summary(
             saved_gbp=saved,
         ))
 
+        created = p.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        if created >= week_start:
+            week_plans.append((projected, actual))
+        if created >= month_start:
+            month_plans.append((projected, actual))
+
     return BudgetSummary(
         plans=plans,
         total_projected_gbp=round(total_projected, 2),
         total_actual_gbp=round(total_actual, 2) if has_any_actual else None,
         total_saved_gbp=round(total_projected - total_actual, 2) if has_any_actual else None,
+        this_week=_savings_period(week_plans),
+        this_month=_savings_period(month_plans),
     )
 
 

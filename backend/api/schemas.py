@@ -38,8 +38,17 @@ class BudgetSummaryPlan(BaseModel):
     saved_gbp: float | None
 
 
+class SavingsPeriod(BaseModel):
+    projected_gbp: float
+    actual_gbp: float | None
+    saved_gbp: float | None
+    plan_count: int
+
+
 class BudgetSummary(BaseModel):
     plans: list[BudgetSummaryPlan]
     total_projected_gbp: float
     total_actual_gbp: float | None
     total_saved_gbp: float | None
+    this_week: SavingsPeriod
+    this_month: SavingsPeriod
