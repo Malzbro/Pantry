@@ -6,7 +6,6 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import { InstallPrompt } from "@/components/InstallPrompt"
 import { PushPrompt } from "@/components/PushPrompt"
 import { CookieConsent } from "@/components/CookieConsent"
-import { PostHogProvider } from "@/components/PostHogProvider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -74,9 +73,7 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="font-sans">
-        <PostHogProvider>
-          {children}
-        </PostHogProvider>
+        {children}
         <ServiceWorkerRegistration />
         <InstallPrompt />
         <PushPrompt />
