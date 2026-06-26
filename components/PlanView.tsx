@@ -2,12 +2,12 @@
 
 import type { PlanResponse, PlannedMeal } from "@/lib/api"
 import { gbp } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useCountUp } from "@/lib/useCountUp"
-import { CostBreakdownBar } from "./CostBreakdownBar"
 import { CalorieDistribution } from "./CalorieDistribution"
 import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
+import { BudgetDashboard } from "./BudgetDashboard"
 
 type Props = {
   plan: PlanResponse
@@ -21,18 +21,7 @@ type ActiveCard = "budget" | "shopping" | "stats" | null
 
 export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onReset }: Props) {
   const [active, setActive] = useState<ActiveCard>(null)
-  const [barWidth, setBarWidth] = useState(0)
-
-  useEffect(() => {
-    if (active !== "budget") {
-      setBarWidth(0)
-      return
-    }
-    const t = setTimeout(() => {
-      setBarWidth(Math.min(100, plan.budget_utilization * 100))
-    }, 50)
-    return () => clearTimeout(t)
-  }, [plan.budget_utilization, active])
+  const [actualCost, setActualCost] = useState<number | null>(null)
 
   const animatedCost = useCountUp(plan.total_cost_gbp, 1000, 200)
   const pct = Math.round(plan.budget_utilization * 100)
@@ -82,7 +71,11 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
           <p className="font-mono text-lg text-ink mt-2">
             {gbp(plan.total_cost_gbp)} <span className="text-muted">of</span> {gbp(plan.budget_gbp)}
           </p>
-          <p className="text-sm text-muted mt-1">{pct}% allocated</p>
+          <p className="text-sm text-muted mt-1">
+            {actualCost !== null
+              ? `Actual: ${gbp(actualCost)}`
+              : `${pct}% allocated`}
+          </p>
           <div className="h-1 bg-chip rounded-sm overflow-hidden mt-3">
             <div className="h-full bg-accent" style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
@@ -158,32 +151,15 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
         width={active === "shopping" ? "wide" : "narrow"}
       >
         {active === "budget" && (
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between text-xs uppercase tracking-widest text-muted mb-2">
-                <span>Budget allocated</span>
-                <span className="font-mono">
-                  {gbp(plan.total_cost_gbp)} / {gbp(plan.budget_gbp)}
-                </span>
-              </div>
-              <div className="h-2 bg-chip rounded-sm overflow-hidden">
-                <div
-                  className="h-full bg-accent transition-all ease-out"
-                  style={{
-                    width: `${barWidth}%`,
-                    transitionDuration: "1000ms",
-                    transitionDelay: "200ms",
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-2 font-mono">
-                <span>£0</span>
-                <span>{pct}% used</span>
-                <span>{gbp(plan.budget_gbp)}</span>
-              </div>
-            </div>
-            <CostBreakdownBar meals={plan.meals} budget={plan.budget_gbp} />
-          </div>
+          <BudgetDashboard
+            planId={plan.plan_id ?? null}
+            meals={plan.meals}
+            totalCost={plan.total_cost_gbp}
+            budget={plan.budget_gbp}
+            budgetUtilization={plan.budget_utilization}
+            actualCost={actualCost}
+            onActualCostSaved={setActualCost}
+          />
         )}
 
         {active === "shopping" && (

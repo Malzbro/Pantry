@@ -35,6 +35,7 @@ export type PlannedMeal = {
 }
 
 export type PlanResponse = {
+  plan_id: string | null
   meals: PlannedMeal[]
   total_cost_gbp: number
   budget_gbp: number
@@ -42,6 +43,22 @@ export type PlanResponse = {
   avg_calories_per_serving: number
   cuisine_diversity: number
   warnings: string[]
+}
+
+export type BudgetSummaryPlan = {
+  id: string
+  created_at: string
+  budget_gbp: number
+  projected_cost_gbp: number
+  actual_cost_gbp: number | null
+  saved_gbp: number | null
+}
+
+export type BudgetSummary = {
+  plans: BudgetSummaryPlan[]
+  total_projected_gbp: number
+  total_actual_gbp: number | null
+  total_saved_gbp: number | null
 }
 
 export type RecipeDetail = {
@@ -153,6 +170,25 @@ export async function createPortalSession(): Promise<{ url: string }> {
     headers: await authHeaders(),
   })
   if (!r.ok) throw new Error(`Portal session failed: ${r.status}`)
+  return r.json()
+}
+
+// ── Budget dashboard ──────────────────────────────────────────────────
+
+export async function updateActualCost(planId: string, actualCostGbp: number): Promise<void> {
+  const r = await fetch(`${BASE_URL}/plans/${planId}/actual-cost`, {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ actual_cost_gbp: actualCostGbp }),
+  })
+  if (!r.ok) throw new Error(`Update actual cost failed: ${r.status}`)
+}
+
+export async function getBudgetSummary(): Promise<BudgetSummary> {
+  const r = await fetch(`${BASE_URL}/plans/budget-summary`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Budget summary failed: ${r.status}`)
   return r.json()
 }
 
