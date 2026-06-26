@@ -7,7 +7,7 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return <LandingPage />
+    return <LandingPage/>
   }
 
   return <PlannerApp userEmail={user.email ?? ""} />
