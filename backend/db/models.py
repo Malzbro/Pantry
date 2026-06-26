@@ -165,6 +165,7 @@ class Plan(Base):
     title = Column(Text, nullable=True)
     request_payload = Column(JSONB, nullable=False)
     response_payload = Column(JSONB, nullable=False)
+    actual_cost_gbp = Column(Numeric(10, 2), nullable=True)
     archived = Column(Boolean, nullable=False, server_default="false")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
