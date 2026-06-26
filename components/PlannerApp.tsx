@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PlannerWizard } from "@/components/PlannerWizard"
-import { Dashboard } from "@/components/Dashboard"
+import { Dashboard, VibeSelector } from "@/components/Dashboard"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
 import { RecipeModal } from "@/components/RecipeModal"
 import posthog from "posthog-js"
@@ -30,6 +30,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null)
   const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null)
   const [showReveal, setShowReveal] = useState(false)
+  const [showWizard, setShowWizard] = useState(false)
 
   const handleSubmit = async (req: PlanRequest) => {
     setLoading(true)
@@ -40,6 +41,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       const result = await createPlan(req)
       setPlan(result)
       setShowReveal(true)
+      setShowWizard(false)
       posthog.capture("plan_generated", {
         budget_gbp: req.weekly_budget_gbp,
         household_size: req.household_size,
@@ -52,6 +54,13 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       setLoading(false)
     }
   }
+
+  const handleRegenerate = () => {
+    if (lastRequest) {
+      handleSubmit(lastRequest)
+    }
+  }
+
   const handleSwapped = (mealIndex: number, newMeal: PlannedMeal) => {
     if (!plan) return
     const newMeals = [...plan.meals]
@@ -68,12 +77,54 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     })
   }
 
+  const renderContent = () => {
+    if (loading) return <PlanSkeleton />
+
+    if (showWizard) {
+      return <PlannerWizard onSubmit={handleSubmit} loading={loading} />
+    }
+
+    if (plan) {
+      return (
+        <Dashboard
+          plan={plan}
+          calorieTarget={lastRequest?.target_calories_per_serving ?? plan.avg_calories_per_serving}
+          householdSize={lastRequest?.household_size ?? 1}
+          onSelectMeal={(m: PlannedMeal) => setSelectedRecipeId(m.recipe_id)}
+          onReset={() => {
+            setPlan(null)
+            setLastRequest(null)
+            setShowReveal(false)
+            setShowWizard(false)
+          }}
+          onRegenerate={handleRegenerate}
+          lastRequest={lastRequest}
+        />
+      )
+    }
+
+    return <VibeSelector onSubmit={handleSubmit} />
+  }
+
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-line">
         <div className="container py-4 flex items-center justify-between">
           <p className="font-display text-lg text-ink">Pantry</p>
           <div className="flex items-center gap-3">
+            {plan && (
+              <button
+                onClick={() => {
+                  setShowWizard(true)
+                  setPlan(null)
+                  setLastRequest(null)
+                  setShowReveal(false)
+                }}
+                className="text-xs text-muted hover:text-ink transition-colors"
+              >
+                New plan
+              </button>
+            )}
             <span className="text-xs text-muted hidden sm:inline">{userEmail}</span>
             <ThemeToggle />
             {isPremium ? (
@@ -120,24 +171,9 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
           </div>
         )}
 
-        {loading ? (
-          <PlanSkeleton />
-        ) : !plan ? (
-          <PlannerWizard onSubmit={handleSubmit} loading={loading} />
-        ) : (
-          <Dashboard
-            plan={plan}
-            calorieTarget={lastRequest?.target_calories_per_serving ?? plan.avg_calories_per_serving}
-            householdSize={lastRequest?.household_size ?? 1}
-            onSelectMeal={(m: PlannedMeal) => setSelectedRecipeId(m.recipe_id)}
-            onReset={() => {
-              setPlan(null)
-              setLastRequest(null)
-              setShowReveal(false)
-            }}
-          />
-        )}
+        {renderContent()}
       </main>
+
       {plan && showReveal && (
         <PlanReveal plan={plan} onComplete={() => setShowReveal(false)} />
       )}
