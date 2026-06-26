@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PlannerWizard } from "@/components/PlannerWizard"
-import { PlanView } from "@/components/PlanView"
+import { Dashboard } from "@/components/Dashboard"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
 import { RecipeModal } from "@/components/RecipeModal"
 import posthog from "posthog-js"
@@ -125,7 +125,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
         ) : !plan ? (
           <PlannerWizard onSubmit={handleSubmit} loading={loading} />
         ) : (
-          <PlanView
+          <Dashboard
             plan={plan}
             calorieTarget={lastRequest?.target_calories_per_serving ?? plan.avg_calories_per_serving}
             householdSize={lastRequest?.household_size ?? 1}
