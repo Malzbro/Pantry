@@ -54,11 +54,20 @@ export type BudgetSummaryPlan = {
   saved_gbp: number | null
 }
 
+export type SavingsPeriod = {
+  projected_gbp: number
+  actual_gbp: number | null
+  saved_gbp: number | null
+  plan_count: number
+}
+
 export type BudgetSummary = {
   plans: BudgetSummaryPlan[]
   total_projected_gbp: number
   total_actual_gbp: number | null
   total_saved_gbp: number | null
+  this_week: SavingsPeriod
+  this_month: SavingsPeriod
 }
 
 export type RecipeDetail = {

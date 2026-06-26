@@ -8,6 +8,7 @@ import { CalorieDistribution } from "./CalorieDistribution"
 import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
 import { BudgetDashboard } from "./BudgetDashboard"
+import { SavingsHeadline } from "./SavingsHeadline"
 
 type Props = {
   plan: PlanResponse
@@ -79,6 +80,8 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
           </p>
         )}
       </div>
+
+      <SavingsHeadline />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
         <button
