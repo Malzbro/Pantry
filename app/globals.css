@@ -12,6 +12,8 @@
   --chip: #F1EDE5;
   --card-border: #D9D3C7;
   --card-border-hover: #B0A893;
+  --gauge-warning: #d97706;
+  --gauge-over: #dc2626;
 }
 
 :root.dark {
@@ -24,6 +26,8 @@
   --chip: #2E2A26;
   --card-border: #3A352F;
   --card-border-hover: #5A5249;
+  --gauge-warning: #f59e0b;
+  --gauge-over: #ef4444;
 }
 
 html, body {
@@ -75,6 +79,18 @@ html, body {
 .reveal-section.revealed {
   opacity: 1;
   transform: translateY(0);
+}
+
+@keyframes sparkline-draw {
+  from { stroke-dashoffset: 300; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
