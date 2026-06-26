@@ -38,10 +38,13 @@ function usePalette() {
 type Props = {
   meals: PlannedMeal[]
   budget: number
+  highlightedMealIndex?: number | null
+  onHoverMealIndex?: (index: number | null) => void
 }
 
-export function CostBreakdownBar({ meals, budget }: Props) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+export function CostBreakdownBar({ meals, budget, highlightedMealIndex, onHoverMealIndex }: Props) {
+  const [localHover, setLocalHover] = useState<number | null>(null)
+  const hoveredIndex = highlightedMealIndex ?? localHover
   const [animated, setAnimated] = useState(false)
   const palette = usePalette()
 
@@ -73,8 +76,8 @@ export function CostBreakdownBar({ meals, budget }: Props) {
           return (
             <div
               key={meal.recipe_id}
-              onMouseEnter={() => setHoveredIndex(i)}
-              onMouseLeave={() => setHoveredIndex(null)}
+              onMouseEnter={() => { setLocalHover(i); onHoverMealIndex?.(i) }}
+              onMouseLeave={() => { setLocalHover(null); onHoverMealIndex?.(null) }}
               className="transition-all ease-out cursor-pointer"
               style={{
                 width: `${widthPct}%`,
