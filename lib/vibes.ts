@@ -116,6 +116,7 @@ export function buildPlanRequest(state: WizardState): PlanRequest {
     excluded_appliances: state.excludedAppliances,
     preferred_cuisines: combinedCuisines,
     preference_text: combinedPrefText,
+    preference_vector: profile?.preferenceVector || null,
     meals_per_week: 7,
   }
 }
@@ -135,6 +136,53 @@ export const INITIAL_STATE: WizardState = {
 export const TOTAL_STEPS = 5
 
 
+// ── Preference vector ─────────────────────────────────────────────────
+
+export type PreferenceVector = {
+  spice: number       // 0 = mild, 5 = very spicy
+  sauce: number       // 0 = dry, 5 = very saucy
+  richness: number    // 0 = light, 5 = rich / indulgent
+  effort: number      // 0 = minimal / no-cook, 5 = involved project
+  familiarity: number // 0 = adventurous / exotic, 5 = familiar comfort
+}
+
+export const PREFERENCE_AXES = ["spice", "sauce", "richness", "effort", "familiarity"] as const
+
+export function computePreferenceVector(liked: SwipeRecipe[]): PreferenceVector {
+  if (liked.length === 0) {
+    return { spice: 2.5, sauce: 2.5, richness: 2.5, effort: 2.5, familiarity: 2.5 }
+  }
+  const sum = { spice: 0, sauce: 0, richness: 0, effort: 0, familiarity: 0 }
+  for (const r of liked) {
+    for (const axis of PREFERENCE_AXES) {
+      sum[axis] += r.vector[axis]
+    }
+  }
+  const n = liked.length
+  return {
+    spice: Math.round((sum.spice / n) * 10) / 10,
+    sauce: Math.round((sum.sauce / n) * 10) / 10,
+    richness: Math.round((sum.richness / n) * 10) / 10,
+    effort: Math.round((sum.effort / n) * 10) / 10,
+    familiarity: Math.round((sum.familiarity / n) * 10) / 10,
+  }
+}
+
+export function preferenceVectorToText(v: PreferenceVector): string {
+  const parts: string[] = []
+  if (v.spice >= 3.5) parts.push("enjoys spicy food")
+  else if (v.spice <= 1.5) parts.push("prefers mild food")
+  if (v.sauce >= 3.5) parts.push("likes saucy dishes")
+  else if (v.sauce <= 1.5) parts.push("prefers drier dishes")
+  if (v.richness >= 3.5) parts.push("likes rich, indulgent meals")
+  else if (v.richness <= 1.5) parts.push("prefers light, healthy meals")
+  if (v.effort <= 1.5) parts.push("prefers quick, easy recipes")
+  else if (v.effort >= 3.5) parts.push("happy with involved cooking")
+  if (v.familiarity >= 3.5) parts.push("prefers familiar comfort food")
+  else if (v.familiarity <= 1.5) parts.push("enjoys trying adventurous dishes")
+  return parts.join("; ")
+}
+
 // ── Swipe deck onboarding ──────────────────────────────────────────────
 
 export type SwipeRecipe = {
@@ -148,6 +196,7 @@ export type SwipeRecipe = {
   caloriesPerServing: number
   imageUrl: string
   vibeMapping: string[]
+  vector: PreferenceVector
 }
 
 export const SWIPE_RECIPES: SwipeRecipe[] = [
@@ -162,6 +211,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 550,
     imageUrl: "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=300&fit=crop",
     vibeMapping: ["comfort", "family"],
+    vector: { spice: 0, sauce: 3, richness: 4, effort: 3, familiarity: 5 },
   },
   {
     id: "sw-chicken-tikka",
@@ -174,6 +224,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 620,
     imageUrl: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop",
     vibeMapping: ["fakeaway", "world"],
+    vector: { spice: 3, sauce: 5, richness: 4, effort: 3, familiarity: 4 },
   },
   {
     id: "sw-stir-fry",
@@ -186,6 +237,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 320,
     imageUrl: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop",
     vibeMapping: ["quick", "plant", "budget"],
+    vector: { spice: 1, sauce: 2, richness: 1, effort: 1, familiarity: 4 },
   },
   {
     id: "sw-tacos",
@@ -198,6 +250,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 480,
     imageUrl: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&h=300&fit=crop",
     vibeMapping: ["fakeaway", "quick", "family"],
+    vector: { spice: 2, sauce: 2, richness: 3, effort: 2, familiarity: 4 },
   },
   {
     id: "sw-pad-thai",
@@ -210,6 +263,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 520,
     imageUrl: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&h=300&fit=crop",
     vibeMapping: ["world", "quick"],
+    vector: { spice: 2, sauce: 3, richness: 2, effort: 2, familiarity: 3 },
   },
   {
     id: "sw-teriyaki-salmon",
@@ -222,6 +276,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 580,
     imageUrl: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop",
     vibeMapping: ["protein", "world"],
+    vector: { spice: 0, sauce: 3, richness: 3, effort: 3, familiarity: 3 },
   },
   {
     id: "sw-pasta-arrabbiata",
@@ -234,6 +289,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 420,
     imageUrl: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=300&fit=crop",
     vibeMapping: ["quick", "budget", "plant"],
+    vector: { spice: 3, sauce: 4, richness: 2, effort: 1, familiarity: 4 },
   },
   {
     id: "sw-greek-salad-bowl",
@@ -246,6 +302,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 380,
     imageUrl: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
     vibeMapping: ["plant", "quick", "budget"],
+    vector: { spice: 0, sauce: 1, richness: 2, effort: 1, familiarity: 3 },
   },
   {
     id: "sw-jollof-rice",
@@ -258,6 +315,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 600,
     imageUrl: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400&h=300&fit=crop",
     vibeMapping: ["world", "family", "comfort"],
+    vector: { spice: 3, sauce: 3, richness: 3, effort: 3, familiarity: 2 },
   },
   {
     id: "sw-falafel-wrap",
@@ -270,6 +328,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 450,
     imageUrl: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400&h=300&fit=crop",
     vibeMapping: ["plant", "budget", "world"],
+    vector: { spice: 1, sauce: 2, richness: 2, effort: 2, familiarity: 3 },
   },
   {
     id: "sw-bbq-burger",
@@ -282,6 +341,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 700,
     imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop",
     vibeMapping: ["fakeaway", "protein", "comfort"],
+    vector: { spice: 1, sauce: 3, richness: 5, effort: 2, familiarity: 5 },
   },
   {
     id: "sw-dhal",
@@ -294,6 +354,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 380,
     imageUrl: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop",
     vibeMapping: ["budget", "plant", "comfort"],
+    vector: { spice: 3, sauce: 5, richness: 3, effort: 2, familiarity: 3 },
   },
   {
     id: "sw-chicken-fajitas",
@@ -306,6 +367,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 520,
     imageUrl: "https://images.unsplash.com/photo-1611250188496-e966043a0629?w=400&h=300&fit=crop",
     vibeMapping: ["quick", "protein", "family"],
+    vector: { spice: 3, sauce: 2, richness: 2, effort: 2, familiarity: 5 },
   },
   {
     id: "sw-risotto",
@@ -318,6 +380,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 480,
     imageUrl: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=400&h=300&fit=crop",
     vibeMapping: ["comfort", "plant"],
+    vector: { spice: 0, sauce: 3, richness: 4, effort: 4, familiarity: 4 },
   },
   {
     id: "sw-fish-chips",
@@ -330,6 +393,7 @@ export const SWIPE_RECIPES: SwipeRecipe[] = [
     caloriesPerServing: 580,
     imageUrl: "https://images.unsplash.com/photo-1579208030886-b1f5b7b4deb2?w=400&h=300&fit=crop",
     vibeMapping: ["fakeaway", "family", "comfort"],
+    vector: { spice: 0, sauce: 1, richness: 3, effort: 3, familiarity: 5 },
   },
 ]
 
@@ -337,6 +401,7 @@ export type TasteProfile = {
   likedCuisines: string[]
   likedTags: string[]
   preferenceText: string
+  preferenceVector: PreferenceVector
   completedAt: string
 }
 
@@ -362,12 +427,15 @@ export function saveTasteProfile(likedRecipes: SwipeRecipe[]): TasteProfile {
     .map(([t]) => t)
 
   const descriptions = likedRecipes.map(r => r.title).join(", ")
-  const preferenceText = `User liked these during onboarding: ${descriptions}. Preferred cuisines: ${likedCuisines.join(", ") || "varied"}.`
+  const preferenceVector = computePreferenceVector(likedRecipes)
+  const vectorText = preferenceVectorToText(preferenceVector)
+  const preferenceText = `User liked these during onboarding: ${descriptions}. Preferred cuisines: ${likedCuisines.join(", ") || "varied"}.${vectorText ? ` Taste profile: ${vectorText}.` : ""}`
 
   const profile: TasteProfile = {
     likedCuisines,
     likedTags,
     preferenceText,
+    preferenceVector,
     completedAt: new Date().toISOString(),
   }
 
