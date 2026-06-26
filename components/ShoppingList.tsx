@@ -58,7 +58,7 @@ export function ShoppingListView({ recipeIds, householdSize }: Props) {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto animate-pulse">
+      <div className="max-w-4xl mx-auto animate-pulse">
         <div className="h-3 w-24 bg-chip rounded-sm mb-3" />
         <div className="h-10 w-2/3 bg-chip rounded-sm mb-12" />
         {[1, 2, 3].map(i => (
@@ -77,7 +77,7 @@ export function ShoppingListView({ recipeIds, householdSize }: Props) {
 
   if (error || !list) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <p className="text-accent">{error ?? "Couldn't build the list."}</p>
       </div>
     )
@@ -86,7 +86,7 @@ export function ShoppingListView({ recipeIds, householdSize }: Props) {
   const totalChecked = checkedItems.size
 
   return (
-    <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
+    <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <p className="text-xs uppercase tracking-widest text-muted mb-3">Shopping list</p>
       <h2 className="font-display text-4xl text-ink mb-2">
         {list.total_ingredients} items
@@ -100,7 +100,7 @@ export function ShoppingListView({ recipeIds, householdSize }: Props) {
         )}
       </p>
 
-      <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-8">
         {list.categories.map((category, ci) => (
           <div
             key={category.name}
