@@ -135,6 +135,24 @@ export const INITIAL_STATE: WizardState = {
 
 export const TOTAL_STEPS = 5
 
+const LAST_REQUEST_KEY = "pantry_last_plan_request"
+
+export function saveLastPlanRequest(req: PlanRequest): void {
+  try {
+    localStorage.setItem(LAST_REQUEST_KEY, JSON.stringify(req))
+  } catch {}
+}
+
+export function loadLastPlanRequest(): PlanRequest | null {
+  try {
+    const raw = localStorage.getItem(LAST_REQUEST_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as PlanRequest
+  } catch {
+    return null
+  }
+}
+
 
 // ── Preference vector ─────────────────────────────────────────────────
 

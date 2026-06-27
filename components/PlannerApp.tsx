@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { PlannerWizard } from "@/components/PlannerWizard"
 import { Dashboard, VibeSelector } from "@/components/Dashboard"
@@ -12,6 +12,7 @@ import { PlanReveal } from "@/components/PlanReveal"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { SubscriptionProvider, useSubscription } from "@/components/SubscriptionContext"
 import { createClient } from "@/utils/supabase/client"
+import { saveLastPlanRequest, loadLastPlanRequest } from "@/lib/vibes"
 
 export function PlannerApp({ userEmail }: { userEmail: string }) {
   return (
@@ -31,6 +32,11 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
   const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null)
   const [showReveal, setShowReveal] = useState(false)
   const [showWizard, setShowWizard] = useState(false)
+  const [savedRequest, setSavedRequest] = useState<PlanRequest | null>(null)
+
+  useEffect(() => {
+    setSavedRequest(loadLastPlanRequest())
+  }, [])
 
   const handleSubmit = async (req: PlanRequest) => {
     setLoading(true)
@@ -42,6 +48,8 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       setPlan(result)
       setShowReveal(true)
       setShowWizard(false)
+      saveLastPlanRequest(req)
+      setSavedRequest(req)
       posthog.capture("plan_generated", {
         budget_gbp: req.weekly_budget_gbp,
         household_size: req.household_size,
@@ -77,6 +85,13 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     })
   }
 
+  const openWizard = () => {
+    setShowWizard(true)
+    setPlan(null)
+    setLastRequest(null)
+    setShowReveal(false)
+  }
+
   const renderContent = () => {
     if (loading) return <PlanSkeleton />
 
@@ -103,7 +118,17 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       )
     }
 
-    return <VibeSelector onSubmit={handleSubmit} />
+    if (savedRequest) {
+      return (
+        <VibeSelector
+          savedRequest={savedRequest}
+          onSubmit={handleSubmit}
+          onCustomise={openWizard}
+        />
+      )
+    }
+
+    return <PlannerWizard onSubmit={handleSubmit} loading={loading} />
   }
 
   return (
@@ -114,12 +139,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
           <div className="flex items-center gap-3">
             {plan && (
               <button
-                onClick={() => {
-                  setShowWizard(true)
-                  setPlan(null)
-                  setLastRequest(null)
-                  setShowReveal(false)
-                }}
+                onClick={openWizard}
                 className="text-xs text-muted hover:text-ink transition-colors"
               >
                 New plan

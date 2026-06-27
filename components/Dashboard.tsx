@@ -9,7 +9,7 @@ import { CostBreakdownBar } from "./CostBreakdownBar"
 import { BudgetGauge } from "./BudgetGauge"
 import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
-import { VIBES, buildPlanRequest, INITIAL_STATE } from "@/lib/vibes"
+import { VIBES } from "@/lib/vibes"
 import type { PlanRequest } from "@/lib/api"
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -484,27 +484,38 @@ function CumulativeSavingsInner({ totalSaved, budgetSummary }: { totalSaved: num
   )
 }
 
-function VibeSelector({ onSubmit }: { onSubmit: (req: PlanRequest) => void }) {
-  const quickVibes = VIBES.filter(v => ["quick", "comfort", "fakeaway"].includes(v.id))
+function VibeSelector({ savedRequest, onSubmit, onCustomise }: {
+  savedRequest: PlanRequest
+  onSubmit: (req: PlanRequest) => void
+  onCustomise: () => void
+}) {
+  const displayVibes = VIBES.slice(0, 6)
 
   const handleVibe = (vibeId: string) => {
-    const state = { ...INITIAL_STATE, selectedVibes: [vibeId] }
-    onSubmit(buildPlanRequest(state))
+    const vibe = VIBES.find(v => v.id === vibeId)
+    if (!vibe) return
+    const vibePrefText = [savedRequest.preference_text, vibe.preferenceText].filter(Boolean).join(". ")
+    onSubmit({
+      ...savedRequest,
+      preferred_cuisines: Array.from(new Set([...savedRequest.preferred_cuisines, ...vibe.cuisineBias])),
+      required_tags: Array.from(new Set([...savedRequest.required_tags, ...vibe.dietaryTags])),
+      preference_text: vibePrefText,
+    })
   }
 
   return (
-    <div className="max-w-2xl mx-auto text-center py-12 animate-in fade-in duration-500">
+    <div className="max-w-3xl mx-auto text-center py-12 animate-in fade-in duration-500">
       <h2 className="font-display text-3xl sm:text-4xl text-ink mb-3">
         What kind of week is this?
       </h2>
       <p className="text-muted mb-8">Pick a vibe and we&apos;ll plan your meals instantly.</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {quickVibes.map((vibe) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {displayVibes.map((vibe) => (
           <button
             key={vibe.id}
             onClick={() => handleVibe(vibe.id)}
-            className="p-6 rounded-lg border-2 border-line hover:border-accent text-left transition-colors group"
+            className="p-5 rounded-lg border-2 border-line hover:border-accent text-left transition-colors group"
           >
             <h3 className="font-display text-lg text-ink group-hover:text-accent transition-colors mb-1">
               {vibe.label}
@@ -514,12 +525,15 @@ function VibeSelector({ onSubmit }: { onSubmit: (req: PlanRequest) => void }) {
         ))}
       </div>
 
-      <p className="text-xs text-muted mt-6">
-        Or{" "}
+      <div className="flex items-center justify-center gap-4 mt-8 text-xs text-muted">
         <button onClick={() => handleVibe("quick")} className="underline hover:text-ink transition-colors">
-          surprise me
+          Surprise me
         </button>
-      </p>
+        <span>or</span>
+        <button onClick={onCustomise} className="underline hover:text-ink transition-colors">
+          Customise plan
+        </button>
+      </div>
     </div>
   )
 }
