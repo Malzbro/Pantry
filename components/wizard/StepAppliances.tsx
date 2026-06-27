@@ -44,9 +44,10 @@ type Props = {
   update: (patch: Partial<WizardState>) => void
   onNext: () => void
   onBack: () => void
+  progress: number
 }
 
-export function StepAppliances({ state, update, onNext, onBack }: Props) {
+export function StepAppliances({ state, update, onNext, onBack, progress }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set())
 
@@ -75,14 +76,11 @@ export function StepAppliances({ state, update, onNext, onBack }: Props) {
 
   return (
     <StepShell
-      step={4}
-      totalSteps={5}
-      eyebrow="Your kitchen"
+      progress={progress}
       title="What's on your counter?"
-      subtitle="Tap the appliances you have. We'll plan around them."
+      subtitle="Tap the appliances you have."
       onNext={onNext}
       onBack={onBack}
-      nextLabel={state.excludedAppliances.length > 0 ? "Continue" : "Skip"}
     >
       <div
         className="relative w-full mx-auto overflow-hidden rounded-xl border border-line"
@@ -136,8 +134,8 @@ export function StepAppliances({ state, update, onNext, onBack }: Props) {
                 <div
                   className="absolute -inset-2 rounded-xl pointer-events-none"
                   style={{
-                    border: "2px solid #6B2737",
-                    boxShadow: "0 0 12px rgba(107,39,55,0.3)",
+                    border: "2px solid var(--accent)",
+                    boxShadow: "0 0 12px color-mix(in srgb, var(--accent) 30%, transparent)",
                   }}
                 />
               )}
@@ -178,10 +176,6 @@ export function StepAppliances({ state, update, onNext, onBack }: Props) {
           )
         })}
       </div>
-
-      <p className="text-center text-sm text-muted mt-4">
-        Tap an appliance to add it to your kitchen. Tap again to remove.
-      </p>
     </StepShell>
   )
 }

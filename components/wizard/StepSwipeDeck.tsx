@@ -10,11 +10,12 @@ type Props = {
   update: (patch: Partial<WizardState>) => void
   onNext: () => void
   onBack: () => void
+  progress: number
 }
 
 type SwipeDirection = "left" | "right" | null
 
-export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
+export function StepSwipeDeck({ state, update, onNext, onBack, progress }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [liked, setLiked] = useState<SwipeRecipe[]>([])
   const [animating, setAnimating] = useState<SwipeDirection>(null)
@@ -98,9 +99,7 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
   if (isComplete) {
     return (
       <StepShell
-        step={2}
-        totalSteps={5}
-        eyebrow="Getting to know you"
+        progress={progress}
         title="Got it!"
         subtitle={`You liked ${liked.length} of ${SWIPE_RECIPES.length} recipes. We'll use this to personalise your plans.`}
         onNext={onNext}
@@ -134,17 +133,14 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
 
   return (
     <StepShell
-      step={2}
-      totalSteps={5}
-      eyebrow="Getting to know you"
+      progress={progress}
       title="Would you eat this?"
-      subtitle="Swipe right if you'd eat it, left to skip. This helps us learn your taste."
+      subtitle="Swipe right if you'd eat it, left to skip."
       onNext={onNext}
       onBack={onBack}
       nextLabel={`Skip all (${SWIPE_RECIPES.length - currentIndex} left)`}
     >
       <div className="relative w-full max-w-sm mx-auto rounded-xl overflow-hidden" style={{ aspectRatio: "4 / 5" }}>
-        {/* Next card (underneath) */}
         {nextRecipe && (
           <div className="absolute inset-0 rounded-xl overflow-hidden border border-line bg-chip scale-[0.96] opacity-60">
             <Image
@@ -157,7 +153,6 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
           </div>
         )}
 
-        {/* Current card */}
         <div
           key={currentIndex}
           ref={cardRef}
@@ -176,7 +171,6 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {/* Full-bleed image */}
           <Image
             src={recipe.imageUrl}
             alt={recipe.title}
@@ -186,10 +180,8 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
             priority
           />
 
-          {/* Gradient overlay — stronger at bottom for text legibility */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          {/* Swipe indicators */}
           <div
             className="absolute top-4 right-4 bg-green-500 text-white font-bold px-3 py-1 rounded-lg text-sm border-2 border-green-400 rotate-12"
             style={{ opacity: likeIndicatorOpacity, transition: dragging ? "none" : "opacity 150ms" }}
@@ -203,7 +195,6 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
             SKIP
           </div>
 
-          {/* Content overlaid at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-5 space-y-2">
             <h3 className="font-display text-2xl text-white drop-shadow-md">{recipe.title}</h3>
             <p className="text-sm text-white/80 leading-snug">{recipe.description}</p>
@@ -237,7 +228,6 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="flex items-center justify-center gap-6 mt-6">
         <button
           onClick={() => handleSwipe("left")}
@@ -263,8 +253,7 @@ export function StepSwipeDeck({ state, update, onNext, onBack }: Props) {
         </button>
       </div>
 
-      {/* Progress */}
-      <p className="text-xs text-muted mt-4 text-center font-mono">
+      <p className="text-xs text-muted mt-4 text-center">
         {currentIndex + 1} of {SWIPE_RECIPES.length} &middot; {liked.length} liked
       </p>
     </StepShell>

@@ -2,9 +2,7 @@ import "./step-shell.css"
 import type { ReactNode } from "react"
 
 type Props = {
-  step: number
-  totalSteps: number
-  eyebrow: string
+  progress: number
   title: string
   subtitle?: string
   children: ReactNode
@@ -15,9 +13,7 @@ type Props = {
 }
 
 export function StepShell({
-  step,
-  totalSteps,
-  eyebrow,
+  progress,
   title,
   subtitle,
   children,
@@ -26,43 +22,41 @@ export function StepShell({
   canAdvance = true,
   nextLabel = "Continue",
 }: Props) {
-  const progress = (step / totalSteps) * 100
-
   return (
-    <div className="max-w-xl mx-auto step-content">
-      <div className="mb-12">
-        <div className="flex justify-between text-xs uppercase tracking-widest text-muted mb-2 font-mono">
-          <span>Step {step} of {totalSteps}</span>
-          <span>{Math.round(progress)}%</span>
-        </div>
-        <div className="h-1 bg-chip rounded-sm overflow-hidden">
+    <div className="max-w-xl mx-auto px-6 flex flex-col min-h-[80vh] step-content">
+      <div className="mb-8">
+        <div className="h-[2px] bg-chip rounded-full overflow-hidden">
           <div
-            className="h-full bg-accent transition-all duration-550 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full bg-accent transition-all duration-500 ease-out"
+            style={{ width: `${progress * 100}%` }}
           />
         </div>
+
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="mt-4 p-1 text-muted hover:text-ink transition-colors"
+            aria-label="Go back"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      <div className="mb-10">
-        <p className="text-xs uppercase tracking-widest text-muted mb-3">{eyebrow}</p>
-        <h1 className="font-display text-4xl text-ink leading-tight mb-3">{title}</h1>
+      <div className="text-center mb-10">
+        <h1 className="font-display text-4xl md:text-5xl text-ink leading-tight mb-3">{title}</h1>
         {subtitle && <p className="text-muted text-lg">{subtitle}</p>}
       </div>
 
-      <div className="mb-12">{children}</div>
+      <div className="flex-1 mb-10">{children}</div>
 
-      <div className="flex items-center justify-between">
-        {onBack ? (
-          <button onClick={onBack} className="text-sm text-muted hover:text-ink transition-colors">
-            ← Back
-          </button>
-        ) : (
-          <span />
-        )}
+      <div className="mt-auto pb-8">
         <button
           onClick={onNext}
           disabled={!canAdvance}
-          className="bg-accent text-accent-fg font-medium px-6 py-3 rounded-md hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full py-4 rounded-xl bg-accent text-accent-fg text-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {nextLabel}
         </button>

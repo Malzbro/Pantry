@@ -10,9 +10,10 @@ type Props = {
   onNext: () => void
   onBack: () => void
   loading: boolean
+  progress: number
 }
 
-export function StepFreeform({ state, update, onNext, onBack, loading }: Props) {
+export function StepFreeform({ state, update, onNext, onBack, loading, progress }: Props) {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const [coldStartLabel, setColdStartLabel] = useState<string>("Planning your week...")
@@ -29,11 +30,9 @@ export function StepFreeform({ state, update, onNext, onBack, loading }: Props) 
 
   return (
     <StepShell
-      step={5}
-      totalSteps={5}
-      eyebrow="Almost there"
+      progress={progress}
       title="Anything else?"
-      subtitle="Add any specifics in your own words. Or just plan the week."
+      subtitle="Add any specifics in your own words."
       onNext={onNext}
       onBack={onBack}
       nextLabel={loading ? coldStartLabel : "Plan my week"}
@@ -41,16 +40,15 @@ export function StepFreeform({ state, update, onNext, onBack, loading }: Props) 
     >
       <div className="space-y-8">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted mb-3">Free text</p>
           <textarea
             value={state.preferenceText}
             onChange={e => update({ preferenceText: e.target.value })}
             placeholder="e.g. lots of veg, nothing too sweet, prefer one-pot meals"
             rows={4}
-            className="w-full bg-transparent border border-line rounded-md p-3 focus:outline-none focus:border-ink resize-none text-ink placeholder:text-muted"
+            className="w-full bg-transparent border border-line rounded-xl p-4 focus:outline-none focus:border-ink resize-none text-ink placeholder:text-muted"
             disabled={loading}
           />
-          <p className="text-xs text-muted mt-2">
+          <p className="text-xs text-muted mt-2 text-center">
             Optional — leave blank to skip.
           </p>
         </div>
@@ -59,7 +57,7 @@ export function StepFreeform({ state, update, onNext, onBack, loading }: Props) 
           {!showAdvanced ? (
             <button
               onClick={() => setShowAdvanced(true)}
-              className="text-sm text-muted hover:text-accent transition-colors"
+              className="text-sm text-muted hover:text-accent transition-colors w-full text-center"
               disabled={loading}
             >
               + Advanced options
@@ -67,7 +65,7 @@ export function StepFreeform({ state, update, onNext, onBack, loading }: Props) 
           ) : (
             <div className="border-t border-line pt-6 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="flex items-baseline justify-between mb-3">
-                <p className="text-xs uppercase tracking-widest text-muted">Calorie target per serving</p>
+                <p className="text-sm text-muted">Calorie target per serving</p>
                 <button
                   onClick={() => setShowAdvanced(false)}
                   className="text-xs text-muted hover:text-ink transition-colors"
@@ -83,15 +81,12 @@ export function StepFreeform({ state, update, onNext, onBack, loading }: Props) 
                 step={50}
                 value={state.calories}
                 onChange={e => update({ calories: Number(e.target.value) })}
-                className="w-full accent-accent"
+                className="w-full wizard-slider"
                 disabled={loading}
               />
-              <div className="text-muted text-sm mt-2">
+              <div className="text-muted text-sm mt-2 text-center">
                 <span className="text-ink font-mono">{state.calories}</span> kcal per serving
               </div>
-              <p className="text-xs text-muted mt-2">
-                The planner aims for this on average. Default is 600 kcal — typical adult dinner range.
-              </p>
             </div>
           )}
         </div>

@@ -47,6 +47,7 @@ export function PlannerWizard({ onSubmit, loading }: Props) {
     : ["budget", "vibe", "dietary", "appliances", "freeform"] as const
 
   const currentStep = stepOrder[state.step - 1]
+  const progress = state.step / totalSteps
 
   const update = (patch: Partial<WizardState>) => setState(s => ({ ...s, ...patch }))
 
@@ -66,15 +67,15 @@ export function PlannerWizard({ onSubmit, loading }: Props) {
 
   return (
     <div key={state.step} data-exiting={exiting ?? ""}>
-      {currentStep === "budget" && <StepBudget state={state} update={update} onNext={next} />}
+      {currentStep === "budget" && <StepBudget state={state} update={update} onNext={next} progress={progress} />}
       {currentStep === "vibe" && (
         hasProfile
-          ? <StepVibe state={state} update={update} onNext={next} onBack={back} />
-          : <StepSwipeDeck state={state} update={update} onNext={next} onBack={back} />
+          ? <StepVibe state={state} update={update} onNext={next} onBack={back} progress={progress} />
+          : <StepSwipeDeck state={state} update={update} onNext={next} onBack={back} progress={progress} />
       )}
-      {currentStep === "dietary" && <StepDietary state={state} update={update} onNext={next} onBack={back} />}
-      {currentStep === "appliances" && <StepAppliances state={state} update={update} onNext={next} onBack={back} />}
-      {currentStep === "freeform" && <StepFreeform state={state} update={update} onNext={submit} onBack={back} loading={loading} />}
+      {currentStep === "dietary" && <StepDietary state={state} update={update} onNext={next} onBack={back} progress={progress} />}
+      {currentStep === "appliances" && <StepAppliances state={state} update={update} onNext={next} onBack={back} progress={progress} />}
+      {currentStep === "freeform" && <StepFreeform state={state} update={update} onNext={submit} onBack={back} loading={loading} progress={progress} />}
     </div>
   )
 }
