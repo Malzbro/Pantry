@@ -183,10 +183,11 @@ export function Dashboard({
 }
 
 /* VibeSelector — kept as-is for returning users */
-export function VibeSelector({ savedRequest, onSubmit, onCustomise }: {
+export function VibeSelector({ savedRequest, onSubmit, onCustomise, onReset }: {
   savedRequest: PlanRequest
   onSubmit: (req: PlanRequest) => void
   onCustomise: () => void
+  onReset: () => void
 }) {
   const displayVibes = VIBES.slice(0, 6)
 
@@ -231,6 +232,12 @@ export function VibeSelector({ savedRequest, onSubmit, onCustomise }: {
         <span>or</span>
         <button onClick={onCustomise} className="underline hover:text-ink transition-colors">
           Customise plan
+        </button>
+      </div>
+
+      <div className="mt-6 text-center">
+        <button onClick={onReset} className="text-xs text-muted hover:text-accent transition-colors">
+          Reset preferences and start fresh
         </button>
       </div>
     </div>
