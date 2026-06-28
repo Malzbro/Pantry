@@ -109,7 +109,10 @@ export async function createPlan(req: PlanRequest): Promise<PlanResponse> {
     headers: await authHeaders(),
     body: JSON.stringify(req),
   })
-  if (!r.ok) throw new Error(`Plan request failed: ${r.status}`)
+  if (!r.ok) {
+    const body = await r.text().catch(() => "")
+    throw new Error(`Plan request failed: ${r.status} ${body}`)
+  }
   return r.json()
 }
 

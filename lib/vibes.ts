@@ -153,6 +153,13 @@ export function loadLastPlanRequest(): PlanRequest | null {
   }
 }
 
+export function clearSavedPreferences(): void {
+  try {
+    localStorage.removeItem(LAST_REQUEST_KEY)
+    localStorage.removeItem(TASTE_PROFILE_KEY)
+  } catch {}
+}
+
 
 // ── Preference vector ─────────────────────────────────────────────────
 

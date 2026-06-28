@@ -12,7 +12,7 @@ import { PlanReveal } from "@/components/PlanReveal"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { SubscriptionProvider, useSubscription } from "@/components/SubscriptionContext"
 import { createClient } from "@/utils/supabase/client"
-import { saveLastPlanRequest, loadLastPlanRequest } from "@/lib/vibes"
+import { saveLastPlanRequest, loadLastPlanRequest, clearSavedPreferences } from "@/lib/vibes"
 
 export function PlannerApp({ userEmail }: { userEmail: string }) {
   return (
@@ -92,6 +92,15 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     setShowReveal(false)
   }
 
+  const resetPreferences = () => {
+    clearSavedPreferences()
+    setSavedRequest(null)
+    setPlan(null)
+    setLastRequest(null)
+    setShowReveal(false)
+    setShowWizard(true)
+  }
+
   const renderContent = () => {
     if (loading) return <PlanSkeleton />
 
@@ -124,6 +133,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
           savedRequest={savedRequest}
           onSubmit={handleSubmit}
           onCustomise={openWizard}
+          onReset={resetPreferences}
         />
       )
     }
