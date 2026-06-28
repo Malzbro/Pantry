@@ -28,6 +28,12 @@ export function ShoppingListView({ recipeIds, householdSize }: Props) {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set())
 
   useEffect(() => {
+    if (recipeIds.length === 0) {
+      setList(null)
+      setError(null)
+      setLoading(false)
+      return
+    }
     setLoading(true)
     getShoppingList({ recipe_ids: recipeIds, household_size: householdSize })
       .then(data => {
