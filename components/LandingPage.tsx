@@ -5,18 +5,19 @@ import { useEffect, useRef } from "react"
 import { Leaf } from "@/components/Leaf"
 import { ThemeToggle } from "@/components/ThemeToggle"
 
-// Known-stable Unsplash IDs, each verified against the meal it represents.
+// Known-stable Unsplash IDs, cross-referenced with lib/vibes.ts SWIPE_RECIPES so
+// every meal title actually matches its photo (no duplicates, no mismatches).
 // `FALLBACK` is used by <img onError> if a CDN entry ever 404s.
 const FALLBACK = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80"
 
 const MEALS = [
-  { title: "Thai Green Curry",   cuisine: "Thai",    cost: "£1.82", day: "Mon", img: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=600&q=80" },
-  { title: "Spaghetti Bolognese", cuisine: "Italian", cost: "£1.45", day: "Tue", img: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=600&q=80" },
-  { title: "Chicken Stir Fry",    cuisine: "Chinese", cost: "£1.68", day: "Wed", img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=600&q=80" },
-  { title: "Bean Chilli",         cuisine: "Mexican", cost: "£1.20", day: "Thu", img: "https://images.unsplash.com/photo-1574484284002-952d92456975?w=600&q=80" },
-  { title: "Herb Roast Chicken",  cuisine: "British", cost: "£1.55", day: "Fri", img: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=600&q=80" },
-  { title: "Veggie Fajitas",      cuisine: "Mexican", cost: "£1.30", day: "Sat", img: "https://images.unsplash.com/photo-1604467794349-0b74285de7e7?w=600&q=80" },
-  { title: "Lemon Salmon",        cuisine: "British", cost: "£2.10", day: "Sun", img: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80" },
+  { title: "Cottage Pie",          cuisine: "British",  cost: "£1.55", day: "Mon", img: "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80" },
+  { title: "Chicken Tikka Masala", cuisine: "Indian",   cost: "£1.80", day: "Tue", img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80" },
+  { title: "Veggie Stir Fry",      cuisine: "Chinese",  cost: "£1.20", day: "Wed", img: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80" },
+  { title: "Pasta Arrabbiata",     cuisine: "Italian",  cost: "£1.10", day: "Thu", img: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=600&q=80" },
+  { title: "Beef Tacos",           cuisine: "Mexican",  cost: "£1.65", day: "Fri", img: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=600&q=80" },
+  { title: "Smashed BBQ Burger",   cuisine: "American", cost: "£1.75", day: "Sat", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80" },
+  { title: "Teriyaki Salmon Bowl", cuisine: "Japanese", cost: "£2.40", day: "Sun", img: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80" },
 ]
 
 const STATS = [
@@ -217,16 +218,16 @@ export function LandingPage() {
                 <div className="space-y-3">
                   <div className="rounded-xl overflow-hidden aspect-[4/3] shadow-sm ring-1 ring-card-border">
                     <img
-                      src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80"
-                      alt="Colourful salad bowl"
+                      src="https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80"
+                      alt="Chicken tikka masala"
                       onError={handleImgError}
                       className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
                     />
                   </div>
                   <div className="rounded-xl overflow-hidden aspect-square shadow-sm ring-1 ring-card-border">
                     <img
-                      src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80"
-                      alt="Homemade pizza"
+                      src="https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80"
+                      alt="Veggie stir fry"
                       onError={handleImgError}
                       className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
                     />
@@ -235,16 +236,16 @@ export function LandingPage() {
                 <div className="space-y-3 pt-10">
                   <div className="rounded-xl overflow-hidden aspect-square shadow-sm ring-1 ring-card-border">
                     <img
-                      src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80"
-                      alt="Fresh vegetables"
+                      src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80"
+                      alt="Cottage pie"
                       onError={handleImgError}
                       className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
                     />
                   </div>
                   <div className="rounded-xl overflow-hidden aspect-[4/3] shadow-sm ring-1 ring-card-border">
                     <img
-                      src="https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80"
-                      alt="Warm curry dish"
+                      src="https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=600&q=80"
+                      alt="Beef tacos"
                       onError={handleImgError}
                       className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
                   <div className="rounded-lg overflow-hidden aspect-[4/3]">
@@ -473,9 +474,12 @@ export function LandingPage() {
               <div
                 key={item.title}
                 data-reveal
-                className="reveal-section rounded-xl border border-card-border p-6 hover:border-card-border-hover hover:-translate-y-0.5 transition-all duration-300"
+                className="reveal-section relative rounded-xl border border-card-border p-6 hover:border-card-border-hover hover:-translate-y-0.5 transition-all duration-300"
                 style={{ transitionDelay: `${(i % 3) * 80}ms` }}
               >
+                <span className="absolute top-4 right-5 font-mono text-[11px] text-muted/60 tracking-wider">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 <span
                   className="flex items-center justify-center w-10 h-10 rounded-lg bg-accent/10 text-accent font-display text-lg mb-4"
                   role="img"
