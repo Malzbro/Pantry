@@ -1,17 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { PlannerWizard } from "@/components/PlannerWizard"
 import { Dashboard, VibeSelector } from "@/components/Dashboard"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
 import { RecipeModal } from "@/components/RecipeModal"
 import posthog from "posthog-js"
-import { createPlan, createPortalSession, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
+import { createPlan, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
-import { ThemeToggle } from "@/components/ThemeToggle"
+import { HeaderMenu } from "@/components/HeaderMenu"
 import { SubscriptionProvider, useSubscription } from "@/components/SubscriptionContext"
-import { createClient } from "@/utils/supabase/client"
 import { saveLastPlanRequest, loadLastPlanRequest, clearSavedPreferences } from "@/lib/vibes"
 
 export function PlannerApp({ userEmail }: { userEmail: string }) {
@@ -24,7 +22,6 @@ export function PlannerApp({ userEmail }: { userEmail: string }) {
 
 function PlannerAppInner({ userEmail }: { userEmail: string }) {
   const { isPremium } = useSubscription()
-  const router = useRouter()
   const [plan, setPlan] = useState<PlanResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -146,51 +143,18 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       <header className="border-b border-line">
         <div className="container py-4 flex items-center justify-between">
           <p className="font-display text-lg text-ink">Pantry</p>
-          <div className="flex items-center gap-3">
-            {plan && (
-              <button
-                onClick={openWizard}
-                className="text-xs text-muted hover:text-ink transition-colors"
-              >
-                New plan
-              </button>
-            )}
-            <span className="text-xs text-muted hidden sm:inline">{userEmail}</span>
-            <ThemeToggle />
-            {isPremium ? (
-              <button
-                onClick={async () => {
-                  try {
-                    const { url } = await createPortalSession()
-                    window.location.href = url
-                  } catch {
-                    router.push("/pricing")
-                  }
-                }}
-                className="text-xs text-muted hover:text-ink underline"
-              >
-                Manage subscription
-              </button>
-            ) : (
-              <a
-                href="/pricing"
-                className="text-xs text-accent hover:underline font-medium"
-              >
-                Upgrade
-              </a>
-            )}
-            <button
-              onClick={async () => {
-                const supabase = createClient()
-                await supabase.auth.signOut()
-                router.push("/sign-in")
-                router.refresh()
-              }}
-              className="text-xs text-muted hover:text-ink underline"
-            >
-              Sign out
-            </button>
-          </div>
+          <HeaderMenu
+            userEmail={userEmail}
+            isPremium={isPremium}
+            hasPlan={!!plan}
+            onHome={() => {
+              setPlan(null)
+              setLastRequest(null)
+              setShowReveal(false)
+              setShowWizard(false)
+            }}
+            onNewPlan={openWizard}
+          />
         </div>
       </header>
 
