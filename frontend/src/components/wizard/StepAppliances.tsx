@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { StepShell } from "./StepShell"
 import type { WizardState } from "@/lib/vibes"
 
@@ -56,17 +56,8 @@ export function StepAppliances({ state, update, onNext, onBack }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [imgErrors, setImgErrors] = useState<Set<string>>(new Set())
 
-  // On first mount, default to "nothing selected" — fill excludedAppliances with all IDs
-  // if it hasn't been touched yet. Guarded so user choices aren't reset on navigation back.
-  const initRef = useRef(false)
-  useEffect(() => {
-    if (!initRef.current && state.excludedAppliances.length === 0) {
-      update({ excludedAppliances: APPLIANCES.map(a => a.id) })
-    }
-    initRef.current = true
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
+  // Default = all appliances assumed owned (empty excludedAppliances). Skipping is safe;
+  // user only taps appliances they DON'T have to remove them from the planner's pool.
   const isOwned = (id: string) => !state.excludedAppliances.includes(id)
 
   const toggle = (id: string) => {
@@ -87,7 +78,7 @@ export function StepAppliances({ state, update, onNext, onBack }: Props) {
       totalSteps={5}
       eyebrow="Your kitchen"
       title="What's on your counter?"
-      subtitle="Tap the appliances you have. We'll plan around them."
+      subtitle="We assume you have all of these. Tap any you don't have so we can plan around them."
       onNext={onNext}
       onBack={onBack}
       nextLabel={state.excludedAppliances.length > 0 ? "Continue" : "Skip"}
@@ -189,7 +180,7 @@ export function StepAppliances({ state, update, onNext, onBack }: Props) {
       </div>
 
       <p className="text-center text-sm text-muted mt-4">
-        Tap an appliance to add it to your kitchen. Tap again to remove.
+        Tap an appliance to remove it from your kitchen. Tap again to add it back.
       </p>
     </StepShell>
   )

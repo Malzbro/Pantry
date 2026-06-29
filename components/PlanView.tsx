@@ -2,12 +2,13 @@
 
 import type { PlanResponse, PlannedMeal } from "@/lib/api"
 import { gbp } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useCountUp } from "@/lib/useCountUp"
-import { CostBreakdownBar } from "./CostBreakdownBar"
 import { CalorieDistribution } from "./CalorieDistribution"
 import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
+import { BudgetDashboard } from "./BudgetDashboard"
+import { SavingsHeadline } from "./SavingsHeadline"
 
 type Props = {
   plan: PlanResponse
@@ -21,23 +22,16 @@ type ActiveCard = "budget" | "shopping" | "stats" | null
 
 export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onReset }: Props) {
   const [active, setActive] = useState<ActiveCard>(null)
-  const [barWidth, setBarWidth] = useState(0)
+  const [actualCost, setActualCost] = useState<number | null>(null)
+  const [skipped, setSkipped] = useState<Set<number>>(new Set())
 
-  useEffect(() => {
-    if (active !== "budget") {
-      setBarWidth(0)
-      return
-    }
-    const t = setTimeout(() => {
-      setBarWidth(Math.min(100, plan.budget_utilization * 100))
-    }, 50)
-    return () => clearTimeout(t)
-  }, [plan.budget_utilization, active])
+  const activeMeals = plan.meals.filter((_, i) => !skipped.has(i))
+  const activeCost = activeMeals.reduce((s, m) => s + m.total_cost_gbp, 0)
+  const activePct = plan.budget_gbp > 0 ? Math.round((activeCost / plan.budget_gbp) * 100) : 0
 
-  const animatedCost = useCountUp(plan.total_cost_gbp, 1000, 200)
-  const pct = Math.round(plan.budget_utilization * 100)
+  const animatedCost = useCountUp(activeCost, 1000, 200)
 
-  const cuisineCounts = plan.meals.reduce<Record<string, number>>((acc, m) => {
+  const cuisineCounts = activeMeals.reduce<Record<string, number>>((acc, m) => {
     acc[m.cuisine] = (acc[m.cuisine] ?? 0) + 1
     return acc
   }, {})
@@ -45,6 +39,15 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
     .sort(([, a], [, b]) => b - a)
     .map(([c, n]) => `${c} × ${n}`)
     .join(", ")
+
+  const toggleSkip = (index: number) => {
+    setSkipped(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
 
   const cardLayout = "text-left p-5 rounded-lg bg-bg transition-all duration-200"
   const cardActive = "border-2 border-accent shadow-md"
@@ -68,10 +71,17 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
 
       <div className="mb-6">
         <h2 className="font-display text-2xl text-ink">
-          Your week — {plan.meals.length} meals,{" "}
+          Your week — {activeMeals.length} meal{activeMeals.length !== 1 ? "s" : ""},{" "}
           <span className="font-mono">{gbp(animatedCost)}</span> total
         </h2>
+        {skipped.size > 0 && (
+          <p className="text-sm text-muted mt-1">
+            {skipped.size} night{skipped.size !== 1 ? "s" : ""} skipped
+          </p>
+        )}
       </div>
+
+      <SavingsHeadline />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
         <button
@@ -80,11 +90,15 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
         >
           <p className={eyebrow}>Budget</p>
           <p className="font-mono text-lg text-ink mt-2">
-            {gbp(plan.total_cost_gbp)} <span className="text-muted">of</span> {gbp(plan.budget_gbp)}
+            {gbp(activeCost)} <span className="text-muted">of</span> {gbp(plan.budget_gbp)}
           </p>
-          <p className="text-sm text-muted mt-1">{pct}% allocated</p>
+          <p className="text-sm text-muted mt-1">
+            {actualCost !== null
+              ? `Actual: ${gbp(actualCost)}`
+              : `${activePct}% allocated`}
+          </p>
           <div className="h-1 bg-chip rounded-sm overflow-hidden mt-3">
-            <div className="h-full bg-accent" style={{ width: `${Math.min(100, pct)}%` }} />
+            <div className="h-full bg-accent" style={{ width: `${Math.min(100, activePct)}%` }} />
           </div>
         </button>
 
@@ -93,7 +107,7 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
           className={`${cardLayout} ${active === "shopping" ? cardActive : cardInactive}`}
         >
           <p className={eyebrow}>Shopping list</p>
-          <p className="font-mono text-lg text-ink mt-2">{plan.meals.length} recipes</p>
+          <p className="font-mono text-lg text-ink mt-2">{activeMeals.length} recipe{activeMeals.length !== 1 ? "s" : ""}</p>
           <p className="text-sm text-muted mt-1">Tap to view ingredients</p>
         </button>
 
@@ -109,9 +123,11 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
         >
           <p className={eyebrow}>Stats</p>
           <p className="font-mono text-lg text-ink mt-2">
-            {Math.round(plan.avg_calories_per_serving)} kcal avg
+            {activeMeals.length > 0
+              ? Math.round(activeMeals.reduce((s, m) => s + m.calories_per_serving, 0) / activeMeals.length)
+              : 0} kcal avg
           </p>
-          <p className="text-sm text-muted mt-1">{plan.cuisine_diversity} cuisines</p>
+          <p className="text-sm text-muted mt-1">{new Set(activeMeals.map(m => m.cuisine)).size} cuisines</p>
         </button>
       </div>
 
@@ -126,28 +142,48 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
       <hr className="border-line mb-8" />
 
       <div className="grid sm:grid-cols-2 gap-4">
-        {plan.meals.map((meal, i) => (
-          <button
-            key={meal.recipe_id}
-            onClick={() => onSelectMeal(meal)}
-            className="text-left p-5 border border-line rounded-lg bg-bg hover:border-ink transition-colors group animate-in fade-in slide-in-from-bottom-2 duration-500"
-            style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-xs uppercase tracking-widest text-muted font-mono">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="text-xs uppercase tracking-widest text-muted">{meal.cuisine}</span>
-            </div>
-            <h3 className="font-display text-xl text-ink mb-4 leading-tight group-hover:text-accent transition-colors">
-              {meal.title}
-            </h3>
-            <div className="flex gap-4 text-sm font-mono text-muted">
-              <span>{gbp(meal.total_cost_gbp)}</span>
-              <span>{meal.calories_per_serving} kcal</span>
-            </div>
-          </button>
-        ))}
+        {plan.meals.map((meal, i) => {
+          const isSkipped = skipped.has(i)
+          return (
+            <button
+              key={meal.recipe_id}
+              onClick={() => !isSkipped && onSelectMeal(meal)}
+              className={`text-left p-5 border rounded-lg bg-bg transition-colors group animate-in fade-in slide-in-from-bottom-2 duration-500 ${
+                isSkipped
+                  ? "border-dashed border-line opacity-50"
+                  : "border-line hover:border-ink"
+              }`}
+              style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-xs uppercase tracking-widest text-muted font-mono">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={isSkipped}
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); toggleSkip(i) }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); toggleSkip(i) } }}
+                  className="text-xs uppercase tracking-widest text-muted hover:text-ink cursor-pointer select-none"
+                >
+                  {isSkipped ? "Unskip" : "Skip"}
+                </span>
+              </div>
+              <h3 className={`font-display text-xl mb-4 leading-tight transition-colors ${
+                isSkipped
+                  ? "line-through text-muted"
+                  : "text-ink group-hover:text-accent"
+              }`}>
+                {meal.title}
+              </h3>
+              <div className="flex gap-4 text-sm font-mono text-muted">
+                <span>{gbp(meal.total_cost_gbp)}</span>
+                <span>{meal.calories_per_serving} kcal</span>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       <Sheet
@@ -158,44 +194,27 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
         width={active === "shopping" ? "wide" : "narrow"}
       >
         {active === "budget" && (
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between text-xs uppercase tracking-widest text-muted mb-2">
-                <span>Budget allocated</span>
-                <span className="font-mono">
-                  {gbp(plan.total_cost_gbp)} / {gbp(plan.budget_gbp)}
-                </span>
-              </div>
-              <div className="h-2 bg-chip rounded-sm overflow-hidden">
-                <div
-                  className="h-full bg-accent transition-all ease-out"
-                  style={{
-                    width: `${barWidth}%`,
-                    transitionDuration: "1000ms",
-                    transitionDelay: "200ms",
-                  }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-muted mt-2 font-mono">
-                <span>£0</span>
-                <span>{pct}% used</span>
-                <span>{gbp(plan.budget_gbp)}</span>
-              </div>
-            </div>
-            <CostBreakdownBar meals={plan.meals} budget={plan.budget_gbp} />
-          </div>
+          <BudgetDashboard
+            planId={plan.plan_id ?? null}
+            meals={plan.meals}
+            totalCost={plan.total_cost_gbp}
+            budget={plan.budget_gbp}
+            budgetUtilization={plan.budget_utilization}
+            actualCost={actualCost}
+            onActualCostSaved={setActualCost}
+          />
         )}
 
         {active === "shopping" && (
           <ShoppingListView
-            recipeIds={plan.meals.map(m => m.recipe_id)}
+            recipeIds={activeMeals.map(m => m.recipe_id)}
             householdSize={householdSize}
           />
         )}
 
         {active === "stats" && (
           <div className="space-y-6">
-            <CalorieDistribution meals={plan.meals} target={Math.round(calorieTarget)} />
+            <CalorieDistribution meals={activeMeals} target={Math.round(calorieTarget)} />
             <div>
               <p className={`${eyebrow} mb-2`}>Cuisine breakdown</p>
               <p className="text-sm text-ink">{cuisineBreakdown}</p>

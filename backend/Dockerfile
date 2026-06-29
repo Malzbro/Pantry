@@ -8,8 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Install Python deps first (better layer caching)
+# Install CPU-only torch first to avoid downloading ~2GB of NVIDIA CUDA packages
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir torch==2.12.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy the backend code
 COPY . .

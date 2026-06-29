@@ -20,6 +20,7 @@ export type PlanRequest = {
   excluded_appliances: string[]
   preferred_cuisines: string[]
   preference_text: string
+  preference_vector: { spice: number; sauce: number; richness: number; effort: number; familiarity: number } | null
   meals_per_week: number
 }
 
@@ -34,6 +35,7 @@ export type PlannedMeal = {
 }
 
 export type PlanResponse = {
+  plan_id: string | null
   meals: PlannedMeal[]
   total_cost_gbp: number
   budget_gbp: number
@@ -41,6 +43,31 @@ export type PlanResponse = {
   avg_calories_per_serving: number
   cuisine_diversity: number
   warnings: string[]
+}
+
+export type BudgetSummaryPlan = {
+  id: string
+  created_at: string
+  budget_gbp: number
+  projected_cost_gbp: number
+  actual_cost_gbp: number | null
+  saved_gbp: number | null
+}
+
+export type SavingsPeriod = {
+  projected_gbp: number
+  actual_gbp: number | null
+  saved_gbp: number | null
+  plan_count: number
+}
+
+export type BudgetSummary = {
+  plans: BudgetSummaryPlan[]
+  total_projected_gbp: number
+  total_actual_gbp: number | null
+  total_saved_gbp: number | null
+  this_week: SavingsPeriod
+  this_month: SavingsPeriod
 }
 
 export type RecipeDetail = {
@@ -82,7 +109,10 @@ export async function createPlan(req: PlanRequest): Promise<PlanResponse> {
     headers: await authHeaders(),
     body: JSON.stringify(req),
   })
-  if (!r.ok) throw new Error(`Plan request failed: ${r.status}`)
+  if (!r.ok) {
+    const body = await r.text().catch(() => "")
+    throw new Error(`Plan request failed: ${r.status} ${body}`)
+  }
   return r.json()
 }
 
@@ -155,6 +185,25 @@ export async function createPortalSession(): Promise<{ url: string }> {
   return r.json()
 }
 
+// ── Budget dashboard ──────────────────────────────────────────────────
+
+export async function updateActualCost(planId: string, actualCostGbp: number): Promise<void> {
+  const r = await fetch(`${BASE_URL}/plans/${planId}/actual-cost`, {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ actual_cost_gbp: actualCostGbp }),
+  })
+  if (!r.ok) throw new Error(`Update actual cost failed: ${r.status}`)
+}
+
+export async function getBudgetSummary(): Promise<BudgetSummary> {
+  const r = await fetch(`${BASE_URL}/plans/budget-summary`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Budget summary failed: ${r.status}`)
+  return r.json()
+}
+
 // ── Push notifications ─────────────────────────────────────────────────
 
 export async function subscribePush(subscription: PushSubscription): Promise<void> {
@@ -189,4 +238,22 @@ export async function getPushStatus(): Promise<{ subscribed: boolean; subscripti
   })
   if (!r.ok) throw new Error(`Push status failed: ${r.status}`)
   return r.json()
+}
+
+// ── GDPR ──────────────────────────────────────────────────────────────
+
+export async function exportUserData(): Promise<Blob> {
+  const r = await fetch(`${BASE_URL}/account/export`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Data export failed: ${r.status}`)
+  return r.blob()
+}
+
+export async function deleteAccount(): Promise<void> {
+  const r = await fetch(`${BASE_URL}/account`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Account deletion failed: ${r.status}`)
 }

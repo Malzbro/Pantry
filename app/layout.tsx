@@ -5,6 +5,7 @@ import { ThemeScript } from "@/components/ThemeScript"
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration"
 import { InstallPrompt } from "@/components/InstallPrompt"
 import { PushPrompt } from "@/components/PushPrompt"
+import { CookieConsent } from "@/components/CookieConsent"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -76,6 +77,7 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <InstallPrompt />
         <PushPrompt />
+        <CookieConsent />
       </body>
     </html>
   )
