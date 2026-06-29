@@ -65,7 +65,10 @@ export function Dashboard({
 
   const saved = plan.budget_gbp - plan.total_cost_gbp
   const isUnder = saved >= 0
-  const animatedSaved = useCountUp(Math.abs(saved), 1200, 200)
+  const animatedTotal = useCountUp(plan.total_cost_gbp, 1400, 200)
+  const pctOfBudget = plan.budget_gbp > 0
+    ? Math.min(100, Math.round((plan.total_cost_gbp / plan.budget_gbp) * 100))
+    : 0
 
   const toggleSkip = (i: number) => {
     setSkipped(prev => {
@@ -80,26 +83,30 @@ export function Dashboard({
     <div className="max-w-xl mx-auto px-6 animate-in fade-in duration-800">
       {/* Budget Summary */}
       <section className="text-center py-8 mb-6">
-        <h2 className={`font-display text-4xl md:text-5xl tracking-tight ${
+        <p className="text-xs uppercase tracking-widest text-muted mb-2">Plan total</p>
+        <h2 className={`font-display text-5xl md:text-6xl tracking-tight ${
           isUnder
-            ? "text-green-600 dark:text-green-400"
+            ? "text-ink"
             : "text-red-500 dark:text-red-400"
         }`}>
-          {isUnder ? "" : "−"}<span className="font-mono">{gbp(animatedSaved)}</span>
+          <span className="font-mono tabular-nums">{gbp(animatedTotal)}</span>
         </h2>
-        <p className={`font-display text-xl md:text-2xl text-ink mt-1 ${
-          isUnder ? "" : ""
-        }`}>
-          {isUnder ? "under" : "over"} your <span className="font-mono">{gbp(plan.budget_gbp)}</span> budget
+        <p className="text-sm text-muted mt-3">
+          of <span className="font-mono">{gbp(plan.budget_gbp)}</span> budget · {plan.meals.length} meals
         </p>
-        <p className="text-sm text-muted mt-2">
-          <span className="font-mono">{gbp(plan.total_cost_gbp)}</span> total for {plan.meals.length} meals
-        </p>
+        <div className="h-1.5 bg-chip rounded-full overflow-hidden mt-4 max-w-xs mx-auto">
+          <div
+            className={`h-full rounded-full transition-all duration-[1400ms] ease-out ${
+              isUnder ? "bg-accent" : "bg-red-500"
+            }`}
+            style={{ width: `${pctOfBudget}%` }}
+          />
+        </div>
       </section>
 
       {/* Meal List */}
       <section className="mb-10">
-        <div className="space-y-2">
+        <div className="space-y-3">
           {plan.meals.map((meal, i) => {
             const isToday = i === todayIndex
             const isSkipped = skipped.has(i)
@@ -108,39 +115,46 @@ export function Dashboard({
               <button
                 key={meal.recipe_id}
                 onClick={() => !isSkipped && onSelectMeal(meal)}
-                className={`w-full flex items-center gap-4 p-3 rounded-xl transition-all text-left ${
+                className={`w-full flex items-center gap-4 p-3 rounded-2xl text-left transition-all duration-200 animate-in fade-in slide-in-from-bottom-1 ${
                   isToday
-                    ? "bg-accent/5 border border-accent/20"
-                    : "hover:bg-chip border border-transparent"
+                    ? "bg-accent/8 border-2 border-accent/40 shadow-md"
+                    : "bg-bg border border-line shadow-sm hover:shadow-md hover:border-ink/40 hover:-translate-y-0.5"
                 } ${isSkipped ? "opacity-40" : ""}`}
                 style={{
                   animationDelay: `${i * 60}ms`,
                   animationFillMode: "both",
                 }}
               >
-                <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-line">
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-md ring-1 ring-black/5">
                   <Image
                     src={getMealImage(meal.cuisine)}
                     alt=""
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="80px"
                   />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted">
-                    {DAY_NAMES[i] ?? `Day ${i + 1}`}
-                    {isToday && <span className="text-accent ml-1.5 font-medium">Today</span>}
-                  </p>
-                  <h3 className={`text-base font-display leading-tight truncate ${
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] uppercase tracking-widest text-muted font-medium">
+                      {DAY_NAMES[i] ?? `Day ${i + 1}`}
+                    </p>
+                    {isToday && (
+                      <span className="text-[10px] uppercase tracking-widest font-semibold text-accent-fg bg-accent px-1.5 py-0.5 rounded">
+                        Today
+                      </span>
+                    )}
+                  </div>
+                  <h3 className={`text-base font-display leading-tight mt-1 line-clamp-2 ${
                     isSkipped ? "line-through text-muted" : "text-ink"
                   }`}>
                     {meal.title}
                   </h3>
+                  <p className="text-xs text-muted mt-1 capitalize">{meal.cuisine}</p>
                 </div>
 
-                <span className="text-sm font-mono text-muted flex-shrink-0">
+                <span className="text-sm font-mono text-ink font-medium flex-shrink-0 self-start mt-1">
                   {gbp(meal.total_cost_gbp)}
                 </span>
               </button>
