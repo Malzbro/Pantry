@@ -1,8 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
-import { ArrowRight, ChefHat, ShoppingCart, Sparkles, Wallet } from "lucide-react"
+import { ArrowRight, ChefHat, Package, ShoppingCart, Sparkles, Wallet } from "lucide-react"
 import type { PlanResponse, PlanRequest } from "@/lib/api"
+import { Sheet } from "./Sheet"
+import { PantrySheet } from "./PantrySheet"
 import { gbp } from "@/lib/utils"
 import { SavingsHeadline } from "./SavingsHeadline"
 
@@ -62,6 +65,7 @@ export function HomePage({
   onQuickGenerate,
   onCopyPlan,
 }: Props) {
+  const [pantryOpen, setPantryOpen] = useState(false)
   const name = firstName(userEmail)
   const today = getTodayIndex()
 
@@ -95,7 +99,7 @@ export function HomePage({
         />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
         <ActionCard
           icon={<ShoppingCart size={20} />}
           title="Shopping list"
@@ -114,7 +118,24 @@ export function HomePage({
           disabled={!plan}
           onClick={onViewPlan}
         />
+        <ActionCard
+          icon={<Package size={20} />}
+          title="Pantry"
+          description="Manage what you have at home"
+          disabled={false}
+          onClick={() => setPantryOpen(true)}
+        />
       </div>
+
+      <Sheet
+        open={pantryOpen}
+        onClose={() => setPantryOpen(false)}
+        title="Pantry"
+        contentKey="pantry"
+        width="narrow"
+      >
+        <PantrySheet />
+      </Sheet>
 
       <div className="mt-8 flex items-center justify-center gap-4 text-sm text-muted">
         <button

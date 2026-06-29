@@ -7,6 +7,7 @@ import { gbp } from "@/lib/utils"
 import { useCountUp } from "@/lib/useCountUp"
 import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
+import { PantrySheet } from "./PantrySheet"
 import { VIBES } from "@/lib/vibes"
 import type { PlanRequest } from "@/lib/api"
 
@@ -62,6 +63,7 @@ export function Dashboard({
 }: Props) {
   const [skipped, setSkipped] = useState<Set<number>>(new Set())
   const [shoppingOpen, setShoppingOpen] = useState(false)
+  const [pantryOpen, setPantryOpen] = useState(false)
   const todayIndex = getTodayIndex()
   const activeMeals = plan.meals.filter((_, i) => !skipped.has(i))
 
@@ -174,6 +176,12 @@ export function Dashboard({
           Shopping list
         </button>
         <button
+          onClick={() => setPantryOpen(true)}
+          className="w-full py-4 rounded-xl border-2 border-line text-ink text-lg font-semibold hover:border-ink transition-colors"
+        >
+          Pantry
+        </button>
+        <button
           onClick={onRegenerate}
           className="w-full py-4 rounded-xl border-2 border-line text-ink text-lg font-semibold hover:border-ink transition-colors"
         >
@@ -199,6 +207,16 @@ export function Dashboard({
           recipeIds={activeMeals.map(m => m.recipe_id)}
           householdSize={householdSize}
         />
+      </Sheet>
+
+      <Sheet
+        open={pantryOpen}
+        onClose={() => setPantryOpen(false)}
+        title="Pantry"
+        contentKey="pantry"
+        width="narrow"
+      >
+        <PantrySheet />
       </Sheet>
     </div>
   )
