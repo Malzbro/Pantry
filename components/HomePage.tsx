@@ -49,6 +49,7 @@ type Props = {
   onOpenShoppingList: () => void
   onNewPlan: () => void
   onQuickGenerate: () => void
+  onCopyPlan: () => void
 }
 
 export function HomePage({
@@ -59,6 +60,7 @@ export function HomePage({
   onOpenShoppingList,
   onNewPlan,
   onQuickGenerate,
+  onCopyPlan,
 }: Props) {
   const name = firstName(userEmail)
   const today = getTodayIndex()
@@ -114,13 +116,20 @@ export function HomePage({
         />
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 flex items-center justify-center gap-4 text-sm text-muted">
         <button
           onClick={onNewPlan}
-          className="inline-flex items-center gap-2 text-sm text-muted hover:text-accent transition-colors"
+          className="inline-flex items-center gap-2 hover:text-accent transition-colors"
         >
           <Sparkles size={14} />
           {plan ? "Start a new plan" : "Customise from scratch"}
+        </button>
+        <span>·</span>
+        <button
+          onClick={onCopyPlan}
+          className="hover:text-accent transition-colors"
+        >
+          Reuse a past plan
         </button>
       </div>
     </div>

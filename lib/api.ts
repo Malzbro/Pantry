@@ -185,6 +185,43 @@ export async function createPortalSession(): Promise<{ url: string }> {
   return r.json()
 }
 
+// ── Plan history ─────────────────────────────────────────────────────
+
+export type PlanSummary = {
+  id: string
+  title: string | null
+  created_at: string
+  total_cost_gbp: number | null
+  actual_cost_gbp: number | null
+  archived: boolean
+}
+
+export type PlanDetail = {
+  id: string
+  title: string | null
+  created_at: string
+  archived: boolean
+  request_payload: PlanRequest
+  response_payload: PlanResponse
+  actual_cost_gbp: number | null
+}
+
+export async function listPlans(limit = 20): Promise<PlanSummary[]> {
+  const r = await fetch(`${BASE_URL}/plans?limit=${limit}`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`List plans failed: ${r.status}`)
+  return r.json()
+}
+
+export async function getPlan(planId: string): Promise<PlanDetail> {
+  const r = await fetch(`${BASE_URL}/plans/${planId}`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Get plan failed: ${r.status}`)
+  return r.json()
+}
+
 // ── Budget dashboard ──────────────────────────────────────────────────
 
 export async function updateActualCost(planId: string, actualCostGbp: number): Promise<void> {
