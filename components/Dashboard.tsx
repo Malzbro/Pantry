@@ -14,22 +14,22 @@ import type { PlanRequest } from "@/lib/api"
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 const CUISINE_IMAGES: Record<string, string> = {
-  british: "https://images.unsplash.com/photo-1579208030886-b1f5b7b4deb2?w=200&h=200&fit=crop",
-  italian: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=200&h=200&fit=crop",
-  indian: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop",
-  chinese: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&h=200&fit=crop",
-  mexican: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=200&h=200&fit=crop",
-  thai: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=200&h=200&fit=crop",
-  japanese: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=200&h=200&fit=crop",
-  mediterranean: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop",
-  african: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=200&h=200&fit=crop",
-  middle_eastern: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&h=200&fit=crop",
-  american: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop",
-  korean: "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=200&h=200&fit=crop",
-  french: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&h=200&fit=crop",
+  british: "https://images.unsplash.com/photo-1579208030886-b1f5b7b4deb2?w=400&h=400&fit=crop",
+  italian: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&h=400&fit=crop",
+  indian: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=400&fit=crop",
+  chinese: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=400&fit=crop",
+  mexican: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&h=400&fit=crop",
+  thai: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&h=400&fit=crop",
+  japanese: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=400&fit=crop",
+  mediterranean: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop",
+  african: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=400&h=400&fit=crop",
+  middle_eastern: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400&h=400&fit=crop",
+  american: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=400&fit=crop",
+  korean: "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400&h=400&fit=crop",
+  french: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=400&fit=crop",
 }
 
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200&h=200&fit=crop"
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=400&h=400&fit=crop"
 
 function getMealImage(cuisine: string): string {
   return CUISINE_IMAGES[cuisine.toLowerCase()] ?? FALLBACK_IMAGE
@@ -119,7 +119,7 @@ export function Dashboard({
               <button
                 key={meal.recipe_id}
                 onClick={() => !isSkipped && onSelectMeal(meal)}
-                className={`w-full flex items-center gap-4 p-3 rounded-2xl text-left transition-all duration-200 animate-in fade-in slide-in-from-bottom-1 ${
+                className={`w-full flex items-start gap-4 p-4 rounded-2xl text-left transition-all duration-200 animate-in fade-in slide-in-from-bottom-1 ${
                   isToday
                     ? "bg-accent/8 border-2 border-accent/40 shadow-md"
                     : "bg-bg border border-line shadow-sm hover:shadow-md hover:border-ink/40 hover:-translate-y-0.5"
@@ -129,17 +129,17 @@ export function Dashboard({
                   animationFillMode: "both",
                 }}
               >
-                <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-md ring-1 ring-black/5">
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-xl overflow-hidden flex-shrink-0 shadow-md ring-1 ring-black/5">
                   <Image
                     src={getMealImage(meal.cuisine)}
                     alt=""
                     fill
                     className="object-cover"
-                    sizes="80px"
+                    sizes="128px"
                   />
                 </div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 py-1">
                   <div className="flex items-center gap-2">
                     <p className="text-[11px] uppercase tracking-widest text-muted font-medium">
                       {DAY_NAMES[i] ?? `Day ${i + 1}`}
@@ -150,17 +150,16 @@ export function Dashboard({
                       </span>
                     )}
                   </div>
-                  <h3 className={`text-base font-display leading-tight mt-1 line-clamp-2 ${
+                  <h3 className={`text-lg font-display leading-snug mt-1.5 line-clamp-2 ${
                     isSkipped ? "line-through text-muted" : "text-ink"
                   }`}>
                     {meal.title}
                   </h3>
-                  <p className="text-xs text-muted mt-1 capitalize">{meal.cuisine}</p>
+                  <p className="text-sm text-muted mt-1.5 capitalize">{meal.cuisine}</p>
+                  <p className="text-sm font-mono text-ink font-medium mt-2">
+                    {gbp(meal.total_cost_gbp)}
+                  </p>
                 </div>
-
-                <span className="text-sm font-mono text-ink font-medium flex-shrink-0 self-start mt-1">
-                  {gbp(meal.total_cost_gbp)}
-                </span>
               </button>
             )
           })}
