@@ -45,55 +45,6 @@ function initials(name: string) {
   return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()
 }
 
-const MEALS = [
-  { title: "Thai Green Curry", cuisine: "Thai", cost: "£1.82", img: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80" },
-  { title: "Spaghetti Bolognese", cuisine: "Italian", cost: "£1.45", img: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&q=80" },
-  { title: "Chicken Stir Fry", cuisine: "Chinese", cost: "£1.68", img: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&q=80" },
-  { title: "Bean Chilli", cuisine: "Mexican", cost: "£1.20", img: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80" },
-  { title: "Shepherd's Pie", cuisine: "British", cost: "£1.55", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80" },
-  { title: "Veggie Fajitas", cuisine: "Mexican", cost: "£1.30", img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80" },
-  { title: "Lemon Salmon", cuisine: "British", cost: "£2.10", img: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80" },
-]
-
-const FEATURES = [
-  {
-    icon: "£",
-    title: "Budget-first planning",
-    desc: "Every plan fits your budget. The algorithm re-weights at every step to keep spend honest — not approximately, actually.",
-  },
-  {
-    icon: "↻",
-    title: "Swap any meal",
-    desc: "Don't fancy something? Swap it for an alternative that still fits the plan and the budget. One tap.",
-  },
-  {
-    icon: "🥗",
-    title: "Dietary-aware",
-    desc: "Vegetarian, halal, gluten-free — hard constraints handled in code, not guesswork.",
-  },
-  {
-    icon: "📋",
-    title: "Smart shopping list",
-    desc: "Ingredients de-duplicated across the week, grouped by supermarket aisle, scaled to your household.",
-  },
-  {
-    icon: "📱",
-    title: "Works on your phone",
-    desc: "Install Pantry to your home screen. Use it in the supermarket — no app store needed.",
-  },
-  {
-    icon: "🎯",
-    title: "Picks you'll actually like",
-    desc: "Choose a vibe — Quick & Easy, High Protein, Fakeaway — and Pantry matches your taste.",
-  },
-]
-
-const TESTIMONIALS = [
-  { name: "Sarah M.", location: "Manchester", text: "We went from spending £80 a week to under £45. The meal plans are actually good — my kids don't even complain." },
-  { name: "James K.", location: "Bristol", text: "I used to waste so much food. Now I buy exactly what I need and the shopping list is spot on every time." },
-  { name: "Priya R.", location: "London", text: "Finally something that handles vegetarian properly. Not just 'remove the meat' — actual balanced meals." },
-]
-
 export function LandingPage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
 
@@ -124,7 +75,6 @@ export function LandingPage() {
     <div className="min-h-screen bg-bg">
       {/* ── Nav ──────────────────────────────────────────────── */}
       <nav className="border-b border-line sticky top-0 bg-bg/85 backdrop-blur-md z-50">
-      <nav className="border-b border-line sticky top-0 bg-bg/90 backdrop-blur-md z-50">
         <div className="container py-4 flex items-center justify-between">
           <Link href="/" className="font-display text-lg text-ink flex items-center gap-2">
             <Leaf size={16} className="text-accent" />
@@ -160,14 +110,6 @@ export function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="hero-stagger">
               <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.75rem] text-ink leading-[1.05] tracking-[-0.01em] mb-6">
-      <section className="pt-16 pb-16 sm:pt-24 sm:pb-24 overflow-hidden">
-        <div className="container max-w-6xl">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="hero-stagger">
-              <p className="text-accent font-medium text-sm tracking-wide uppercase mb-4">
-                Budget meal planning for the UK
-              </p>
-              <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.5rem] text-ink leading-[1.08] mb-6">
                 A week of meals.{" "}
                 <span className="text-accent">Under budget.</span>
               </h1>
@@ -179,10 +121,6 @@ export function LandingPage() {
                 <Link
                   href="/sign-up"
                   className="w-full sm:w-auto px-8 py-3.5 bg-accent text-accent-fg rounded-md font-medium text-base hover:opacity-90 hover:-translate-y-0.5 transition-all text-center shadow-sm"
-              <div className="flex flex-col sm:flex-row items-start gap-3 mb-8">
-                <Link
-                  href="/sign-up"
-                  className="w-full sm:w-auto px-8 py-3.5 bg-accent text-accent-fg rounded-md font-medium text-base hover:opacity-90 transition-opacity text-center"
                 >
                   Start planning — it&apos;s free
                 </Link>
@@ -207,9 +145,6 @@ export function LandingPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-muted text-sm">
-                Joined by <span className="text-ink font-medium">2,000+</span> UK households
-              </p>
             </div>
 
             {/* Hero food image grid */}
@@ -248,34 +183,6 @@ export function LandingPage() {
                       alt="Beef tacos"
                       onError={handleImgError}
                       className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
-                  <div className="rounded-lg overflow-hidden aspect-[4/3]">
-                    <img
-                      src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"
-                      alt="Colorful healthy salad bowl"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <div className="rounded-lg overflow-hidden aspect-square">
-                    <img
-                      src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80"
-                      alt="Fresh homemade pizza"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-3 pt-8">
-                  <div className="rounded-lg overflow-hidden aspect-square">
-                    <img
-                      src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=80"
-                      alt="Fresh vegetables and healthy food"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <div className="rounded-lg overflow-hidden aspect-[4/3]">
-                    <img
-                      src="https://images.unsplash.com/photo-1547592180-85f173990554?w=500&q=80"
-                      alt="Warm curry dish"
-                      className="object-cover w-full h-full"
                     />
                   </div>
                 </div>
@@ -294,10 +201,6 @@ export function LandingPage() {
                 <p className="text-[11px] text-muted mt-1.5">
                   81% of £40 budget
                 </p>
-              <div className="absolute -bottom-4 -left-4 bg-bg border border-line rounded-lg px-4 py-3 shadow-sm">
-                <p className="text-xs text-muted mb-0.5">This week&apos;s spend</p>
-                <p className="font-mono text-2xl text-accent font-semibold">£32.40</p>
-                <p className="text-xs text-muted">of £40 budget</p>
               </div>
             </div>
           </div>
@@ -322,15 +225,12 @@ export function LandingPage() {
                 desc: "Tell Pantry your weekly budget and household size. Pick a vibe — Quick & Easy, Fakeaway, World Food — or go freeform.",
                 img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80",
                 imgAlt: "Notebook with budget plan",
-                img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80",
-                imgAlt: "Budget planning",
               },
               {
                 step: "02",
                 title: "Get 7 meals",
                 desc: "Varied cuisines, real portions, dietary needs respected. Every meal fits the budget — not approximately, actually.",
                 img: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=80",
-                img: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=400&q=80",
                 imgAlt: "Variety of meals on a table",
               },
               {
@@ -339,8 +239,6 @@ export function LandingPage() {
                 desc: "Ingredients aggregated across the week, categorised by aisle, and scaled to your household. Ready for the supermarket.",
                 img: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80",
                 imgAlt: "Grocery shopping basket",
-                img: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80",
-                imgAlt: "Grocery shopping",
               },
             ].map((item, i) => (
               <div
@@ -355,11 +253,6 @@ export function LandingPage() {
                     alt={item.imgAlt}
                     onError={handleImgError}
                     className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
-                <div className="rounded-lg overflow-hidden aspect-[16/10] mb-5">
-                  <img
-                    src={item.img}
-                    alt={item.imgAlt}
-                    className="object-cover w-full h-full"
                   />
                 </div>
                 <span className="font-mono text-sm text-accent font-medium">
@@ -380,7 +273,6 @@ export function LandingPage() {
         <div className="container max-w-5xl">
           <div data-reveal className="reveal-section text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl text-ink mb-3 tracking-tight">
-            <h2 className="font-display text-3xl sm:text-4xl text-ink mb-3">
               Here&apos;s what a £40 week looks like
             </h2>
             <p className="text-muted max-w-lg mx-auto">
@@ -406,14 +298,6 @@ export function LandingPage() {
                     <span className="absolute top-2 left-2 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-bg/90 text-ink border border-card-border backdrop-blur-sm">
                       {meal.day}
                     </span>
-                  className="rounded-lg border border-card-border bg-bg overflow-hidden hover:border-card-border-hover transition-colors duration-300"
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={meal.img}
-                      alt={meal.title}
-                      className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
-                    />
                   </div>
                   <div className="p-3">
                     <p className="font-medium text-ink text-sm leading-tight mb-1">
@@ -435,11 +319,6 @@ export function LandingPage() {
                   Weekly total
                 </p>
                 <p className="font-mono text-3xl text-accent font-semibold mb-1 leading-none">
-              <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 flex flex-col justify-center items-center text-center">
-                <p className="text-xs text-muted uppercase tracking-wide mb-2">
-                  Weekly total
-                </p>
-                <p className="font-mono text-3xl text-accent font-semibold mb-1">
                   £32.40
                 </p>
                 <p className="text-sm text-muted mb-4">
@@ -485,10 +364,6 @@ export function LandingPage() {
                   role="img"
                   aria-label={item.title}
                 >
-                className="reveal-section rounded-lg border border-card-border p-6 hover:border-card-border-hover transition-colors duration-300"
-                style={{ transitionDelay: `${(i % 3) * 80}ms` }}
-              >
-                <span className="text-2xl mb-3 block" role="img" aria-label={item.title}>
                   {item.icon}
                 </span>
                 <h3 className="font-display text-lg text-ink mb-2">
@@ -508,7 +383,6 @@ export function LandingPage() {
         <div className="container max-w-5xl">
           <div data-reveal className="reveal-section text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl text-ink tracking-tight">
-            <h2 className="font-display text-3xl sm:text-4xl text-ink">
               Real people, real savings
             </h2>
           </div>
@@ -538,15 +412,6 @@ export function LandingPage() {
                     <p className="text-ink font-medium text-sm leading-tight">{t.name}</p>
                     <p className="text-muted text-xs">{t.location}</p>
                   </div>
-                className="reveal-section rounded-lg border border-card-border bg-bg p-6"
-                style={{ transitionDelay: `${i * 100}ms` }}
-              >
-                <p className="text-ink leading-relaxed mb-4 text-sm">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div>
-                  <p className="text-ink font-medium text-sm">{t.name}</p>
-                  <p className="text-muted text-xs">{t.location}</p>
                 </div>
               </div>
             ))}
@@ -565,8 +430,6 @@ export function LandingPage() {
           }}
         />
         <div data-reveal className="container max-w-2xl text-center reveal-section relative">
-      <section className="py-20 sm:py-28 border-t border-line">
-        <div data-reveal className="container max-w-2xl text-center reveal-section">
           <Leaf size={24} className="text-accent mx-auto mb-6" />
           <h2 className="font-display text-3xl sm:text-4xl text-ink mb-4 tracking-tight">
             Start saving on your weekly shop
@@ -579,7 +442,6 @@ export function LandingPage() {
             <Link
               href="/sign-up"
               className="w-full sm:w-auto px-8 py-3.5 bg-accent text-accent-fg rounded-md font-medium hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-sm"
-              className="w-full sm:w-auto px-8 py-3.5 bg-accent text-accent-fg rounded-md font-medium hover:opacity-90 transition-opacity"
             >
               Get started — free
             </Link>
