@@ -190,6 +190,24 @@ class PlanMeal(Base):
     plan = relationship("Plan", back_populates="meals")
 
 
+class PantryItem(Base):
+    __tablename__ = "pantry_items"
+    __table_args__ = (
+        Index("ix_pantry_items_household_id", "household_id"),
+        Index("ix_pantry_items_name", "household_id", "name", unique=True),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    household_id = Column(UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=False)
+    name = Column(Text, nullable=False)
+    quantity_grams = Column(Float, nullable=False, default=0)
+    category = Column(Text, nullable=True)
+    added_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    household = relationship("Household")
+
+
 class PushSubscription(Base):
     __tablename__ = "push_subscriptions"
     __table_args__ = (

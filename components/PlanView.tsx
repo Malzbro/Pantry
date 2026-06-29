@@ -9,6 +9,7 @@ import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
 import { BudgetDashboard } from "./BudgetDashboard"
 import { SavingsHeadline } from "./SavingsHeadline"
+import { PantrySheet } from "./PantrySheet"
 
 type Props = {
   plan: PlanResponse
@@ -18,7 +19,7 @@ type Props = {
   onReset: () => void
 }
 
-type ActiveCard = "budget" | "shopping" | "stats" | null
+type ActiveCard = "budget" | "shopping" | "pantry" | "stats" | null
 
 export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onReset }: Props) {
   const [active, setActive] = useState<ActiveCard>(null)
@@ -52,12 +53,12 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
   const cardLayout = "text-left p-5 rounded-lg bg-bg transition-all duration-200"
   const cardActive = "border-2 border-accent shadow-md"
   const cardInactive = "border-2 border-[#D9D3C7] shadow-sm hover:border-[#B0A893] hover:shadow-md"
-  const cardMuted = "border-2 border-[#D9D3C7] shadow-sm opacity-60 cursor-not-allowed"
   const eyebrow = "text-xs uppercase tracking-widest text-muted"
 
   const sheetTitle =
     active === "budget" ? "Budget"
     : active === "shopping" ? "Shopping list"
+    : active === "pantry" ? "Pantry"
     : active === "stats" ? "Stats"
     : ""
 
@@ -111,11 +112,14 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
           <p className="text-sm text-muted mt-1">Tap to view ingredients</p>
         </button>
 
-        <div className={`${cardLayout} ${cardMuted}`} aria-disabled="true">
+        <button
+          onClick={() => setActive(active === "pantry" ? null : "pantry")}
+          className={`${cardLayout} ${active === "pantry" ? cardActive : cardInactive}`}
+        >
           <p className={eyebrow}>Pantry</p>
-          <p className="font-mono text-lg text-muted mt-2">Coming soon</p>
-          <p className="text-sm text-muted mt-1">Track what you already have</p>
-        </div>
+          <p className="font-mono text-lg text-ink mt-2">What you have</p>
+          <p className="text-sm text-muted mt-1">Tap to manage</p>
+        </button>
 
         <button
           onClick={() => setActive(active === "stats" ? null : "stats")}
@@ -211,6 +215,8 @@ export function PlanView({ plan, calorieTarget, householdSize, onSelectMeal, onR
             householdSize={householdSize}
           />
         )}
+
+        {active === "pantry" && <PantrySheet />}
 
         {active === "stats" && (
           <div className="space-y-6">

@@ -277,6 +277,58 @@ export async function getPushStatus(): Promise<{ subscribed: boolean; subscripti
   return r.json()
 }
 
+// ── Pantry ────────────────────────────────────────────────────────────
+
+export type PantryItem = {
+  id: string
+  name: string
+  quantity_grams: number
+  category: string | null
+  added_at: string
+  updated_at: string
+}
+
+export type PantryList = {
+  items: PantryItem[]
+  total_items: number
+}
+
+export async function listPantry(): Promise<PantryList> {
+  const r = await fetch(`${BASE_URL}/pantry`, {
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`List pantry failed: ${r.status}`)
+  return r.json()
+}
+
+export async function addPantryItem(name: string, quantityGrams: number): Promise<PantryItem> {
+  const r = await fetch(`${BASE_URL}/pantry`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ name, quantity_grams: quantityGrams }),
+  })
+  if (!r.ok) throw new Error(`Add pantry item failed: ${r.status}`)
+  return r.json()
+}
+
+export async function updatePantryItem(itemId: string, quantityGrams: number): Promise<PantryItem> {
+  const r = await fetch(`${BASE_URL}/pantry/${itemId}`, {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ quantity_grams: quantityGrams }),
+  })
+  if (!r.ok) throw new Error(`Update pantry item failed: ${r.status}`)
+  return r.json()
+}
+
+export async function deletePantryItem(itemId: string): Promise<void> {
+  const r = await fetch(`${BASE_URL}/pantry/${itemId}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  })
+  if (!r.ok) throw new Error(`Delete pantry item failed: ${r.status}`)
+}
+
 // ── GDPR ──────────────────────────────────────────────────────────────
 
 export async function exportUserData(): Promise<Blob> {

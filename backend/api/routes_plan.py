@@ -6,9 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from api.deps import get_db, current_user_id
-from db.models import HouseholdMember, Plan, PlanMeal
+from db.models import HouseholdMember, Plan, PlanMeal, PantryItem
+from db.queries import get_recipe_by_id
 from planner.planner import plan_week
 from planner.schemas import PlanRequest, PlanResponse
+from planner.shopping import _normalize_name
 
 
 router = APIRouter(tags=["plan"])
@@ -56,4 +58,36 @@ def create_plan(
     db.refresh(plan)
 
     response.plan_id = plan.id
+
+    _deplete_pantry(db, household_id, response, request.household_size)
+
     return response
+
+
+def _deplete_pantry(
+    db: Session, household_id: UUID, response: PlanResponse, household_size: int
+) -> None:
+    """Auto-deduct ingredients used in the plan from the household pantry."""
+    pantry_items = (
+        db.query(PantryItem)
+        .filter(PantryItem.household_id == household_id, PantryItem.quantity_grams > 0)
+        .all()
+    )
+    if not pantry_items:
+        return
+
+    pantry_map = {item.name: item for item in pantry_items}
+
+    for meal in response.meals:
+        recipe = get_recipe_by_id(db, meal.recipe_id)
+        if not recipe:
+            continue
+        scale = max(1.0, household_size / recipe.servings)
+        for ing in recipe.ingredients:
+            key = _normalize_name(ing.name)
+            if key in pantry_map:
+                pantry_map[key].quantity_grams = max(
+                    0, pantry_map[key].quantity_grams - (ing.grams * scale)
+                )
+
+    db.commit()
