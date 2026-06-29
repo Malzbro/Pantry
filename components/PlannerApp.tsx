@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { PlannerWizard } from "@/components/PlannerWizard"
-import { Dashboard, VibeSelector } from "@/components/Dashboard"
+import { Dashboard } from "@/components/Dashboard"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
 import { RecipeModal } from "@/components/RecipeModal"
 import posthog from "posthog-js"
 import { createPlan, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
 import { HeaderMenu } from "@/components/HeaderMenu"
+import { HomePage } from "@/components/HomePage"
 import { SubscriptionProvider, useSubscription } from "@/components/SubscriptionContext"
-import { saveLastPlanRequest, loadLastPlanRequest, clearSavedPreferences } from "@/lib/vibes"
+import { saveLastPlanRequest, loadLastPlanRequest } from "@/lib/vibes"
+
+type View = "home" | "wizard" | "plan"
 
 export function PlannerApp({ userEmail }: { userEmail: string }) {
   return (
@@ -28,7 +31,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null)
   const [lastRequest, setLastRequest] = useState<PlanRequest | null>(null)
   const [showReveal, setShowReveal] = useState(false)
-  const [showWizard, setShowWizard] = useState(false)
+  const [view, setView] = useState<View>("home")
   const [savedRequest, setSavedRequest] = useState<PlanRequest | null>(null)
 
   useEffect(() => {
@@ -44,7 +47,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       const result = await createPlan(req)
       setPlan(result)
       setShowReveal(true)
-      setShowWizard(false)
+      setView("plan")
       saveLastPlanRequest(req)
       setSavedRequest(req)
       posthog.capture("plan_generated", {
@@ -83,76 +86,82 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
   }
 
   const openWizard = () => {
-    setShowWizard(true)
-    setPlan(null)
-    setLastRequest(null)
+    setView("wizard")
     setShowReveal(false)
   }
 
-  const resetPreferences = () => {
-    clearSavedPreferences()
-    setSavedRequest(null)
-    setPlan(null)
-    setLastRequest(null)
+  const goHome = () => {
+    setView("home")
     setShowReveal(false)
-    setShowWizard(true)
+  }
+
+  const goToPlan = () => {
+    if (plan) {
+      setView("plan")
+      setShowReveal(false)
+    }
+  }
+
+  const quickGenerate = () => {
+    if (savedRequest) handleSubmit(savedRequest)
+  }
+
+  const openShoppingList = () => {
+    if (!plan) return
+    setView("plan")
+    setShowReveal(false)
   }
 
   const renderContent = () => {
     if (loading) return <PlanSkeleton />
 
-    if (showWizard) {
+    if (view === "wizard") {
       return <PlannerWizard onSubmit={handleSubmit} loading={loading} />
     }
 
-    if (plan) {
+    if (view === "plan" && plan) {
       return (
         <Dashboard
           plan={plan}
           calorieTarget={lastRequest?.target_calories_per_serving ?? plan.avg_calories_per_serving}
           householdSize={lastRequest?.household_size ?? 1}
           onSelectMeal={(m: PlannedMeal) => setSelectedRecipeId(m.recipe_id)}
-          onReset={() => {
-            setPlan(null)
-            setLastRequest(null)
-            setShowReveal(false)
-            setShowWizard(false)
-          }}
+          onReset={goHome}
           onRegenerate={handleRegenerate}
           lastRequest={lastRequest}
         />
       )
     }
 
-    if (savedRequest) {
-      return (
-        <VibeSelector
-          savedRequest={savedRequest}
-          onSubmit={handleSubmit}
-          onCustomise={openWizard}
-          onReset={resetPreferences}
-        />
-      )
-    }
-
-    return <PlannerWizard onSubmit={handleSubmit} loading={loading} />
+    return (
+      <HomePage
+        userEmail={userEmail}
+        plan={plan}
+        savedRequest={savedRequest}
+        onViewPlan={goToPlan}
+        onOpenShoppingList={openShoppingList}
+        onNewPlan={openWizard}
+        onQuickGenerate={quickGenerate}
+      />
+    )
   }
 
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-line">
         <div className="container py-4 flex items-center justify-between">
-          <p className="font-display text-lg text-ink">Pantry</p>
+          <button
+            onClick={goHome}
+            className="font-display text-lg text-ink hover:text-accent transition-colors"
+            aria-label="Go to home"
+          >
+            Pantry
+          </button>
           <HeaderMenu
             userEmail={userEmail}
             isPremium={isPremium}
             hasPlan={!!plan}
-            onHome={() => {
-              setPlan(null)
-              setLastRequest(null)
-              setShowReveal(false)
-              setShowWizard(false)
-            }}
+            onHome={goHome}
             onNewPlan={openWizard}
           />
         </div>
