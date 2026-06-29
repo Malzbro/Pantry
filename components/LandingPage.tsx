@@ -26,12 +26,12 @@ const STATS = [
 ]
 
 const FEATURES = [
-  { icon: "£", title: "Budget-first planning",   desc: "Every plan fits your budget. The algorithm re-weights at every step to keep spend honest — not approximately, actually." },
-  { icon: "↻", title: "Swap any meal",            desc: "Don't fancy something? Swap it for an alternative that still fits the plan and the budget. One tap." },
-  { icon: "✓", title: "Dietary-aware",            desc: "Vegetarian, halal, gluten-free — hard constraints handled in code, not guesswork." },
-  { icon: "≡", title: "Smart shopping list",      desc: "Ingredients de-duplicated across the week, grouped by supermarket aisle, scaled to your household." },
-  { icon: "◐", title: "Works on your phone",      desc: "Install Pantry to your home screen. Use it in the supermarket — no app store needed." },
-  { icon: "★", title: "Picks you'll actually like", desc: "Choose a vibe — Quick & Easy, High Protein, Fakeaway — and Pantry matches your taste." },
+  { icon: "💷", title: "Budget-first planning",     desc: "Every plan fits your budget. The algorithm re-weights at every step to keep spend honest — not approximately, actually." },
+  { icon: "🔁", title: "Swap any meal",             desc: "Don't fancy something? Swap it for an alternative that still fits the plan and the budget. One tap." },
+  { icon: "🌱", title: "Dietary-aware",             desc: "Vegetarian, halal, gluten-free — hard constraints handled in code, not guesswork." },
+  { icon: "🛒", title: "Smart shopping list",       desc: "Ingredients de-duplicated across the week, grouped by supermarket aisle, scaled to your household." },
+  { icon: "📲", title: "Works on your phone",       desc: "Install Pantry to your home screen. Use it in the supermarket — no app store needed." },
+  { icon: "❤️", title: "Picks you'll actually like", desc: "Choose a vibe — Quick & Easy, High Protein, Fakeaway — and Pantry matches your taste." },
 ]
 
 const TESTIMONIALS = [
@@ -108,10 +108,6 @@ export function LandingPage() {
         <div className="container max-w-6xl relative">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="hero-stagger">
-              <p className="inline-flex items-center gap-2 text-accent font-medium text-xs tracking-[0.14em] uppercase mb-5 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/15">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                Budget meal planning · UK
-              </p>
               <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.75rem] text-ink leading-[1.05] tracking-[-0.01em] mb-6">
                 A week of meals.{" "}
                 <span className="text-accent">Under budget.</span>
@@ -250,7 +246,7 @@ export function LandingPage() {
                 className="reveal-section group"
                 style={{ transitionDelay: `${i * 100}ms` }}
               >
-                <div className="rounded-xl overflow-hidden aspect-[16/10] mb-5 ring-1 ring-card-border shadow-sm">
+                <div className="rounded-xl overflow-hidden aspect-[16/10] mb-5">
                   <img
                     src={item.img}
                     alt={item.imgAlt}
