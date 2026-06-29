@@ -46,6 +46,7 @@ type Props = {
   onSelectMeal: (meal: PlannedMeal) => void
   onReset: () => void
   onRegenerate: () => void
+  onCopyPlan: () => void
   lastRequest: PlanRequest | null
 }
 
@@ -56,6 +57,7 @@ export function Dashboard({
   onSelectMeal,
   onReset,
   onRegenerate,
+  onCopyPlan,
   lastRequest,
 }: Props) {
   const [skipped, setSkipped] = useState<Set<number>>(new Set())
@@ -176,6 +178,12 @@ export function Dashboard({
           className="w-full py-4 rounded-xl border-2 border-line text-ink text-lg font-semibold hover:border-ink transition-colors"
         >
           Regenerate plan
+        </button>
+        <button
+          onClick={onCopyPlan}
+          className="w-full py-3 text-sm text-muted hover:text-accent transition-colors"
+        >
+          Reuse a past plan
         </button>
       </section>
 

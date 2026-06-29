@@ -8,6 +8,7 @@ import { RecipeModal } from "@/components/RecipeModal"
 import posthog from "posthog-js"
 import { createPlan, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
+import { PlanCopySheet } from "@/components/PlanCopySheet"
 import { HeaderMenu } from "@/components/HeaderMenu"
 import { HomePage } from "@/components/HomePage"
 import { SubscriptionProvider, useSubscription } from "@/components/SubscriptionContext"
@@ -33,6 +34,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
   const [showReveal, setShowReveal] = useState(false)
   const [view, setView] = useState<View>("home")
   const [savedRequest, setSavedRequest] = useState<PlanRequest | null>(null)
+  const [copySheetOpen, setCopySheetOpen] = useState(false)
 
   useEffect(() => {
     setSavedRequest(loadLastPlanRequest())
@@ -112,6 +114,18 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     setShowReveal(false)
   }
 
+  const handleCopyPlan = (requestPayload: Record<string, unknown>, changeText: string) => {
+    const req = requestPayload as unknown as PlanRequest
+    const merged: PlanRequest = {
+      ...req,
+      preference_text: changeText.trim()
+        ? [req.preference_text, changeText.trim()].filter(Boolean).join(". ")
+        : req.preference_text,
+    }
+    setCopySheetOpen(false)
+    handleSubmit(merged)
+  }
+
   const renderContent = () => {
     if (loading) return <PlanSkeleton />
 
@@ -128,6 +142,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
           onSelectMeal={(m: PlannedMeal) => setSelectedRecipeId(m.recipe_id)}
           onReset={goHome}
           onRegenerate={handleRegenerate}
+          onCopyPlan={() => setCopySheetOpen(true)}
           lastRequest={lastRequest}
         />
       )
@@ -142,6 +157,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
         onOpenShoppingList={openShoppingList}
         onNewPlan={openWizard}
         onQuickGenerate={quickGenerate}
+        onCopyPlan={() => setCopySheetOpen(true)}
       />
     )
   }
@@ -187,6 +203,12 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
         currentMeals={plan?.meals ?? []}
         onClose={() => setSelectedRecipeId(null)}
         onSwapped={handleSwapped}
+      />
+
+      <PlanCopySheet
+        open={copySheetOpen}
+        onClose={() => setCopySheetOpen(false)}
+        onCopy={handleCopyPlan}
       />
 
       <footer className="border-t border-line mt-20">
