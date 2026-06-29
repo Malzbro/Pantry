@@ -6,6 +6,8 @@ import posthog from "posthog-js"
 import { createClient } from "@/utils/supabase/client"
 
 export default function SignUp() {
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -18,10 +20,19 @@ export default function SignUp() {
     setError(null)
 
     const supabase = createClient()
+    const first = firstName.trim()
+    const last = lastName.trim()
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          first_name: first,
+          last_name: last,
+          full_name: `${first} ${last}`.trim(),
+        },
+      },
     })
 
     if (error) {
@@ -63,11 +74,39 @@ export default function SignUp() {
       <h1 className="font-display text-2xl text-ink text-center mb-8">Create your account</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="firstName" className="block text-sm text-muted mb-1">First name</label>
+            <input
+              id="firstName"
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-line rounded-md bg-bg text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+          </div>
+          <div>
+            <label htmlFor="lastName" className="block text-sm text-muted mb-1">Last name</label>
+            <input
+              id="lastName"
+              type="text"
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-line rounded-md bg-bg text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+          </div>
+        </div>
+
         <div>
           <label htmlFor="email" className="block text-sm text-muted mb-1">Email</label>
           <input
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -80,6 +119,7 @@ export default function SignUp() {
           <input
             id="password"
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

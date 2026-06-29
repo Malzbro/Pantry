@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, X, Home, Sparkles, Sun, Moon, CreditCard, LogOut, User } from "lucide-react"
+import { Menu, X, Home, Sparkles, Sun, Moon, CreditCard, LogOut, User, UserCog } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { createPortalSession } from "@/lib/api"
 import { getInitialTheme, applyTheme, type Theme } from "@/lib/theme"
@@ -78,6 +78,11 @@ export function HeaderMenu({ userEmail, isPremium, hasPlan, onHome, onNewPlan }:
     }
   }
 
+  const handleAccount = () => {
+    setOpen(false)
+    router.push("/account")
+  }
+
   const handleSignOut = async () => {
     setOpen(false)
     const supabase = createClient()
@@ -124,6 +129,11 @@ export function HeaderMenu({ userEmail, isPremium, hasPlan, onHome, onNewPlan }:
               icon={isDark ? <Sun size={16} /> : <Moon size={16} />}
               label={isDark ? "Light mode" : "Dark mode"}
               onClick={toggleTheme}
+            />
+            <MenuItem
+              icon={<UserCog size={16} />}
+              label="Account"
+              onClick={handleAccount}
             />
             <MenuItem
               icon={<CreditCard size={16} />}
