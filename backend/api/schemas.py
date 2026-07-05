@@ -43,6 +43,10 @@ class SavingsPeriod(BaseModel):
     actual_gbp: float | None
     saved_gbp: float | None
     plan_count: int
+    # Rebased savings: how the period's spend (actual if recorded, else projected)
+    # compares against an external baseline rather than the user's own budget.
+    baseline_gbp: float | None = None
+    baseline_saved_gbp: float | None = None
 
 
 class BudgetSummary(BaseModel):
@@ -52,3 +56,7 @@ class BudgetSummary(BaseModel):
     total_saved_gbp: float | None
     this_week: SavingsPeriod
     this_month: SavingsPeriod
+    # Context for the rebased savings baseline used by the periods above.
+    household_size: int
+    baseline_source: str  # "personal" | "ons"
+    baseline_weekly_gbp: float
