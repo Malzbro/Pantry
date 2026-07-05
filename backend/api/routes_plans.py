@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 
 from api.deps import get_db, current_user_id
 from api.schemas import PlanSummary, PlanDetail, ActualCostUpdate, BudgetSummary, BudgetSummaryPlan, SavingsPeriod
-from db.models import Plan, HouseholdMember
+from db.models import Plan, HouseholdMember, Household
+from planner.savings import ons_weekly_baseline_gbp
 
 
 router = APIRouter(tags=["plans"])
@@ -54,16 +55,33 @@ def list_plans(
     ]
 
 
-def _savings_period(plans_in_period: list[tuple[float, float | None]]) -> SavingsPeriod:
+def _savings_period(
+    plans_in_period: list[tuple[float, float | None]],
+    baseline_weekly_gbp: float,
+) -> SavingsPeriod:
     projected = sum(p for p, _ in plans_in_period)
     actuals = [a for _, a in plans_in_period if a is not None]
     actual_total = sum(actuals) if actuals else None
     saved = round(projected - actual_total, 2) if actual_total is not None else None
+
+    # Rebased savings: compare the period's real spend (actual where recorded,
+    # projected otherwise) against an external baseline, not the user's budget.
+    if plans_in_period:
+        spend = sum(a if a is not None else p for p, a in plans_in_period)
+        baseline_total = baseline_weekly_gbp * len(plans_in_period)
+        baseline_gbp = round(baseline_total, 2)
+        baseline_saved_gbp = round(baseline_total - spend, 2)
+    else:
+        baseline_gbp = None
+        baseline_saved_gbp = None
+
     return SavingsPeriod(
         projected_gbp=round(projected, 2),
         actual_gbp=round(actual_total, 2) if actual_total is not None else None,
         saved_gbp=saved,
         plan_count=len(plans_in_period),
+        baseline_gbp=baseline_gbp,
+        baseline_saved_gbp=baseline_saved_gbp,
     )
 
 
@@ -92,6 +110,8 @@ def budget_summary(
     total_projected = 0.0
     total_actual = 0.0
     has_any_actual = False
+    recorded_actuals: list[float] = []
+    household_size: int | None = None
     week_plans: list[tuple[float, float | None]] = []
     month_plans: list[tuple[float, float | None]] = []
 
@@ -105,6 +125,13 @@ def budget_summary(
         if actual is not None:
             total_actual += actual
             has_any_actual = True
+            recorded_actuals.append(actual)
+
+        # rows are newest-first, so the first plan we see gives the latest household size.
+        if household_size is None and p.request_payload:
+            hs = p.request_payload.get("household_size")
+            if hs:
+                household_size = int(hs)
 
         plans.append(BudgetSummaryPlan(
             id=p.id,
@@ -123,13 +150,35 @@ def budget_summary(
         if created >= month_start:
             month_plans.append((projected, actual))
 
+    # Household size for the ONS fallback: latest plan → household record → 1.
+    if household_size is None:
+        household = (
+            db.query(Household)
+            .join(HouseholdMember, HouseholdMember.household_id == Household.id)
+            .filter(HouseholdMember.user_id == user_id)
+            .first()
+        )
+        household_size = household.household_size if household else 1
+
+    # Pick the strongest available baseline: the user's own average recorded shop
+    # once they have history, otherwise the ONS UK average for their household size.
+    if recorded_actuals:
+        baseline_source = "personal"
+        baseline_weekly = round(sum(recorded_actuals) / len(recorded_actuals), 2)
+    else:
+        baseline_source = "ons"
+        baseline_weekly = ons_weekly_baseline_gbp(household_size)
+
     return BudgetSummary(
         plans=plans,
         total_projected_gbp=round(total_projected, 2),
         total_actual_gbp=round(total_actual, 2) if has_any_actual else None,
         total_saved_gbp=round(total_projected - total_actual, 2) if has_any_actual else None,
-        this_week=_savings_period(week_plans),
-        this_month=_savings_period(month_plans),
+        this_week=_savings_period(week_plans, baseline_weekly),
+        this_month=_savings_period(month_plans, baseline_weekly),
+        household_size=household_size,
+        baseline_source=baseline_source,
+        baseline_weekly_gbp=baseline_weekly,
     )
 
 

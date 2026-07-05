@@ -59,6 +59,8 @@ export type SavingsPeriod = {
   actual_gbp: number | null
   saved_gbp: number | null
   plan_count: number
+  baseline_gbp: number | null
+  baseline_saved_gbp: number | null
 }
 
 export type BudgetSummary = {
@@ -68,6 +70,9 @@ export type BudgetSummary = {
   total_saved_gbp: number | null
   this_week: SavingsPeriod
   this_month: SavingsPeriod
+  household_size: number
+  baseline_source: "personal" | "ons"
+  baseline_weekly_gbp: number
 }
 
 export type RecipeDetail = {

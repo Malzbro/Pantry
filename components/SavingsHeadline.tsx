@@ -1,29 +1,50 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getBudgetSummary, type SavingsPeriod } from "@/lib/api"
+import { getBudgetSummary, type BudgetSummary, type SavingsPeriod } from "@/lib/api"
 import { gbp } from "@/lib/utils"
 import { useCountUp } from "@/lib/useCountUp"
 
 type Tab = "week" | "month"
 
-function PeriodDisplay({ period, label }: { period: SavingsPeriod; label: string }) {
-  const saved = period.saved_gbp ?? 0
+function baselineLabel(source: "personal" | "ons", householdSize: number): string {
+  if (source === "personal") return "your usual shop"
+  const who = householdSize === 1 ? "1 person" : `${householdSize} people`
+  return `the UK average for ${who}`
+}
+
+function PeriodDisplay({
+  period,
+  label,
+  source,
+  householdSize,
+}: {
+  period: SavingsPeriod
+  label: Tab
+  source: "personal" | "ons"
+  householdSize: number
+}) {
+  const saved = period.baseline_saved_gbp ?? 0
   const isPositive = saved > 0
   const animatedSaved = useCountUp(Math.abs(saved), 1200, 300)
+  const periodWord = label === "week" ? "this week" : "this month"
 
-  if (period.actual_gbp === null) {
+  if (period.plan_count === 0 || period.baseline_saved_gbp === null) {
     return (
       <div className="text-center py-4">
         <p className="text-sm text-muted">
-          No actual spend recorded {label === "week" ? "this week" : "this month"} yet
+          No plans {periodWord} yet
         </p>
         <p className="text-xs text-muted mt-1">
-          Record what you spent after shopping to see your savings
+          Generate a plan to see how it compares
         </p>
       </div>
     )
   }
+
+  const comparisonBasis = period.actual_gbp !== null
+    ? "based on what you spent"
+    : "projected from your plan"
 
   return (
     <div className="text-center py-2">
@@ -34,18 +55,17 @@ function PeriodDisplay({ period, label }: { period: SavingsPeriod; label: string
             ? "text-red-500 dark:text-red-400"
             : "text-ink"
       }`}>
-        {isPositive ? "" : saved < 0 ? "+" : ""}
         {gbp(animatedSaved)}
       </p>
       <p className="text-sm text-muted mt-2">
         {isPositive
-          ? `saved ${label === "week" ? "this week" : "this month"}`
+          ? `saved ${periodWord} vs ${baselineLabel(source, householdSize)}`
           : saved < 0
-            ? `over budget ${label === "week" ? "this week" : "this month"}`
-            : `on budget ${label === "week" ? "this week" : "this month"}`}
+            ? `over ${baselineLabel(source, householdSize)} ${periodWord}`
+            : `in line with ${baselineLabel(source, householdSize)}`}
       </p>
       <p className="text-xs text-muted mt-1">
-        across {period.plan_count} plan{period.plan_count !== 1 ? "s" : ""}
+        {comparisonBasis}
       </p>
     </div>
   )
@@ -53,8 +73,7 @@ function PeriodDisplay({ period, label }: { period: SavingsPeriod; label: string
 
 export function SavingsHeadline() {
   const [tab, setTab] = useState<Tab>("week")
-  const [week, setWeek] = useState<SavingsPeriod | null>(null)
-  const [month, setMonth] = useState<SavingsPeriod | null>(null)
+  const [summary, setSummary] = useState<BudgetSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -62,19 +81,18 @@ export function SavingsHeadline() {
     getBudgetSummary()
       .then((data) => {
         if (cancelled) return
-        setWeek(data.this_week)
-        setMonth(data.this_month)
+        setSummary(data)
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [])
 
-  if (loading) return null
+  if (loading || !summary) return null
 
-  if (week && month && week.plan_count === 0 && month.plan_count === 0) return null
+  if (summary.this_week.plan_count === 0 && summary.this_month.plan_count === 0) return null
 
-  const period = tab === "week" ? week : month
+  const period = tab === "week" ? summary.this_week : summary.this_month
 
   return (
     <div className="rounded-lg border-2 border-line bg-bg p-5 mb-6 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -104,7 +122,12 @@ export function SavingsHeadline() {
         </div>
       </div>
 
-      {period && <PeriodDisplay period={period} label={tab} />}
+      <PeriodDisplay
+        period={period}
+        label={tab}
+        source={summary.baseline_source}
+        householdSize={summary.household_size}
+      />
     </div>
   )
 }
