@@ -47,6 +47,9 @@ class SavingsPeriod(BaseModel):
     # compares against an external baseline rather than the user's own budget.
     baseline_gbp: float | None = None
     baseline_saved_gbp: float | None = None
+    # Budget comparison kept alongside: how far under the user's own budget.
+    budget_gbp: float | None = None
+    under_budget_gbp: float | None = None
 
 
 class BudgetSummary(BaseModel):

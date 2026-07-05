@@ -61,6 +61,8 @@ export type SavingsPeriod = {
   plan_count: number
   baseline_gbp: number | null
   baseline_saved_gbp: number | null
+  budget_gbp: number | null
+  under_budget_gbp: number | null
 }
 
 export type BudgetSummary = {
