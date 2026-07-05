@@ -6,7 +6,7 @@ import { Dashboard } from "@/components/Dashboard"
 import { PlanSkeleton } from "@/components/PlanSkeleton"
 import { RecipeModal } from "@/components/RecipeModal"
 import posthog from "posthog-js"
-import { createPlan, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
+import { createPlan, listPlans, getPlan, type PlanRequest, type PlanResponse, type PlannedMeal } from "@/lib/api"
 import { PlanReveal } from "@/components/PlanReveal"
 import { PlanCopySheet } from "@/components/PlanCopySheet"
 import { HeaderMenu } from "@/components/HeaderMenu"
@@ -35,9 +35,33 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
   const [view, setView] = useState<View>("home")
   const [savedRequest, setSavedRequest] = useState<PlanRequest | null>(null)
   const [copySheetOpen, setCopySheetOpen] = useState(false)
+  const [planCreatedAt, setPlanCreatedAt] = useState<string | null>(null)
+  const [actualCost, setActualCost] = useState<number | null>(null)
+  const [booting, setBooting] = useState(true)
 
   useEffect(() => {
     setSavedRequest(loadLastPlanRequest())
+    let cancelled = false
+    ;(async () => {
+      try {
+        const summaries = await listPlans(20)
+        const latest = summaries.find(p => !p.archived)
+        if (!latest) return
+        const detail = await getPlan(latest.id)
+        if (cancelled) return
+        // Stored response_payload has plan_id=null (backend sets it after model_dump),
+        // so re-attach the real id — actual-spend recording depends on it.
+        setPlan({ ...detail.response_payload, plan_id: detail.id })
+        setLastRequest(detail.request_payload)
+        setPlanCreatedAt(detail.created_at)
+        setActualCost(detail.actual_cost_gbp)
+      } catch {
+        // Not signed in or no saved plans — fall through to "No plan yet".
+      } finally {
+        if (!cancelled) setBooting(false)
+      }
+    })()
+    return () => { cancelled = true }
   }, [])
 
   const handleSubmit = async (req: PlanRequest) => {
@@ -48,6 +72,8 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     try {
       const result = await createPlan(req)
       setPlan(result)
+      setPlanCreatedAt(new Date().toISOString())
+      setActualCost(null)
       setShowReveal(true)
       setView("plan")
       saveLastPlanRequest(req)
@@ -128,6 +154,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
 
   const renderContent = () => {
     if (loading) return <PlanSkeleton />
+    if (booting) return null
 
     if (view === "wizard") {
       return <PlannerWizard onSubmit={handleSubmit} loading={loading} />
@@ -139,6 +166,9 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
           plan={plan}
           calorieTarget={lastRequest?.target_calories_per_serving ?? plan.avg_calories_per_serving}
           householdSize={lastRequest?.household_size ?? 1}
+          planCreatedAt={planCreatedAt}
+          actualCost={actualCost}
+          onActualCostSaved={setActualCost}
           onSelectMeal={(m: PlannedMeal) => setSelectedRecipeId(m.recipe_id)}
           onReset={goHome}
           onRegenerate={handleRegenerate}
@@ -152,6 +182,7 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
       <HomePage
         userEmail={userEmail}
         plan={plan}
+        planCreatedAt={planCreatedAt}
         savedRequest={savedRequest}
         onViewPlan={goToPlan}
         onOpenShoppingList={openShoppingList}

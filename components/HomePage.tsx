@@ -7,9 +7,8 @@ import type { PlanResponse, PlanRequest } from "@/lib/api"
 import { Sheet } from "./Sheet"
 import { PantrySheet } from "./PantrySheet"
 import { gbp } from "@/lib/utils"
+import { getMealDays } from "@/lib/planDays"
 import { SavingsHeadline } from "./SavingsHeadline"
-
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 const CUISINE_IMAGES: Record<string, string> = {
   british: "https://images.unsplash.com/photo-1579208030886-b1f5b7b4deb2?w=200&h=200&fit=crop",
@@ -32,11 +31,6 @@ function getMealImage(cuisine: string): string {
   return CUISINE_IMAGES[cuisine.toLowerCase()] ?? FALLBACK_IMAGE
 }
 
-function getTodayIndex(): number {
-  const day = new Date().getDay()
-  return day === 0 ? 6 : day - 1
-}
-
 function firstName(email: string): string {
   const local = email.split("@")[0] ?? ""
   const first = local.split(/[._-]/)[0] ?? local
@@ -47,6 +41,7 @@ function firstName(email: string): string {
 type Props = {
   userEmail: string
   plan: PlanResponse | null
+  planCreatedAt: string | null
   savedRequest: PlanRequest | null
   onViewPlan: () => void
   onOpenShoppingList: () => void
@@ -58,6 +53,7 @@ type Props = {
 export function HomePage({
   userEmail,
   plan,
+  planCreatedAt,
   savedRequest,
   onViewPlan,
   onOpenShoppingList,
@@ -67,7 +63,6 @@ export function HomePage({
 }: Props) {
   const [pantryOpen, setPantryOpen] = useState(false)
   const name = firstName(userEmail)
-  const today = getTodayIndex()
 
   return (
     <div className="max-w-2xl mx-auto px-6 animate-in fade-in duration-500">
@@ -88,7 +83,7 @@ export function HomePage({
       {plan ? (
         <CurrentPlanCard
           plan={plan}
-          todayIndex={today}
+          planCreatedAt={planCreatedAt}
           onViewPlan={onViewPlan}
         />
       ) : (
@@ -159,17 +154,18 @@ export function HomePage({
 
 function CurrentPlanCard({
   plan,
-  todayIndex,
+  planCreatedAt,
   onViewPlan,
 }: {
   plan: PlanResponse
-  todayIndex: number
+  planCreatedAt: string | null
   onViewPlan: () => void
 }) {
   const isUnder = plan.total_cost_gbp <= plan.budget_gbp
   const pct = plan.budget_gbp > 0
     ? Math.min(100, Math.round((plan.total_cost_gbp / plan.budget_gbp) * 100))
     : 0
+  const mealDays = getMealDays(planCreatedAt, plan.meals.length)
   const preview = plan.meals.slice(0, 3)
 
   return (
@@ -196,7 +192,7 @@ function CurrentPlanCard({
 
       <div className="space-y-2 mb-5">
         {preview.map((meal, i) => {
-          const isToday = i === todayIndex
+          const isToday = mealDays[i]?.isToday ?? false
           return (
             <div
               key={meal.recipe_id}
@@ -214,7 +210,7 @@ function CurrentPlanCard({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-[10px] uppercase tracking-widest text-muted font-medium">
-                    {DAY_NAMES[i] ?? `Day ${i + 1}`}
+                    {mealDays[i]?.label ?? `Day ${i + 1}`}
                   </p>
                   {isToday && (
                     <span className="text-[9px] uppercase tracking-widest font-semibold text-accent-fg bg-accent px-1.5 py-0.5 rounded">
