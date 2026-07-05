@@ -1,17 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import type { PlanResponse, PlannedMeal } from "@/lib/api"
 import { gbp } from "@/lib/utils"
 import { useCountUp } from "@/lib/useCountUp"
+import { getMealDays } from "@/lib/planDays"
 import { ShoppingListView } from "./ShoppingList"
 import { Sheet } from "./Sheet"
 import { PantrySheet } from "./PantrySheet"
+import { BudgetDashboard } from "./BudgetDashboard"
 import { VIBES } from "@/lib/vibes"
 import type { PlanRequest } from "@/lib/api"
-
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 const CUISINE_IMAGES: Record<string, string> = {
   british: "https://images.unsplash.com/photo-1579208030886-b1f5b7b4deb2?w=400&h=400&fit=crop",
@@ -35,15 +35,17 @@ function getMealImage(cuisine: string): string {
   return CUISINE_IMAGES[cuisine.toLowerCase()] ?? FALLBACK_IMAGE
 }
 
-function getTodayIndex(): number {
-  const day = new Date().getDay()
-  return day === 0 ? 6 : day - 1
+function skipKey(planId: string): string {
+  return `pantry_skipped_${planId}`
 }
 
 type Props = {
   plan: PlanResponse
   calorieTarget: number
   householdSize: number
+  planCreatedAt: string | null
+  actualCost: number | null
+  onActualCostSaved: (cost: number) => void
   onSelectMeal: (meal: PlannedMeal) => void
   onReset: () => void
   onRegenerate: () => void
@@ -55,6 +57,9 @@ export function Dashboard({
   plan,
   calorieTarget,
   householdSize,
+  planCreatedAt,
+  actualCost,
+  onActualCostSaved,
   onSelectMeal,
   onReset,
   onRegenerate,
@@ -64,21 +69,36 @@ export function Dashboard({
   const [skipped, setSkipped] = useState<Set<number>>(new Set())
   const [shoppingOpen, setShoppingOpen] = useState(false)
   const [pantryOpen, setPantryOpen] = useState(false)
-  const todayIndex = getTodayIndex()
+  const [budgetOpen, setBudgetOpen] = useState(false)
+  const mealDays = getMealDays(planCreatedAt, plan.meals.length)
   const activeMeals = plan.meals.filter((_, i) => !skipped.has(i))
+  const activeCost = activeMeals.reduce((s, m) => s + m.total_cost_gbp, 0)
 
-  const saved = plan.budget_gbp - plan.total_cost_gbp
-  const isUnder = saved >= 0
-  const animatedTotal = useCountUp(plan.total_cost_gbp, 1400, 200)
+  const isUnder = activeCost <= plan.budget_gbp
+  const animatedTotal = useCountUp(activeCost, 1400, 200)
   const pctOfBudget = plan.budget_gbp > 0
-    ? Math.min(100, Math.round((plan.total_cost_gbp / plan.budget_gbp) * 100))
+    ? Math.min(100, Math.round((activeCost / plan.budget_gbp) * 100))
     : 0
+
+  // Load persisted skips for this plan; runs on mount and whenever the plan changes.
+  useEffect(() => {
+    if (!plan.plan_id) { setSkipped(new Set()); return }
+    try {
+      const raw = localStorage.getItem(skipKey(plan.plan_id))
+      setSkipped(raw ? new Set<number>(JSON.parse(raw)) : new Set())
+    } catch {
+      setSkipped(new Set())
+    }
+  }, [plan.plan_id])
 
   const toggleSkip = (i: number) => {
     setSkipped(prev => {
       const next = new Set(prev)
       if (next.has(i)) next.delete(i)
       else next.add(i)
+      if (plan.plan_id) {
+        try { localStorage.setItem(skipKey(plan.plan_id), JSON.stringify([...next])) } catch {}
+      }
       return next
     })
   }
@@ -96,7 +116,10 @@ export function Dashboard({
           <span className="font-mono tabular-nums">{gbp(animatedTotal)}</span>
         </h2>
         <p className="text-sm text-muted mt-3">
-          of <span className="font-mono">{gbp(plan.budget_gbp)}</span> budget · {plan.meals.length} meals
+          of <span className="font-mono">{gbp(plan.budget_gbp)}</span> budget ·{" "}
+          {skipped.size > 0
+            ? `${activeMeals.length} of ${plan.meals.length} meals`
+            : `${plan.meals.length} meals`}
         </p>
         <div className="h-1.5 bg-chip rounded-full overflow-hidden mt-4 max-w-xs mx-auto">
           <div
@@ -112,7 +135,7 @@ export function Dashboard({
       <section className="mb-10">
         <div className="space-y-3">
           {plan.meals.map((meal, i) => {
-            const isToday = i === todayIndex
+            const isToday = mealDays[i]?.isToday ?? false
             const isSkipped = skipped.has(i)
 
             return (
@@ -142,13 +165,23 @@ export function Dashboard({
                 <div className="flex-1 min-w-0 py-1">
                   <div className="flex items-center gap-2">
                     <p className="text-[11px] uppercase tracking-widest text-muted font-medium">
-                      {DAY_NAMES[i] ?? `Day ${i + 1}`}
+                      {mealDays[i]?.label ?? `Day ${i + 1}`}
                     </p>
                     {isToday && (
                       <span className="text-[10px] uppercase tracking-widest font-semibold text-accent-fg bg-accent px-1.5 py-0.5 rounded">
                         Today
                       </span>
                     )}
+                    <span
+                      role="switch"
+                      aria-checked={isSkipped}
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); toggleSkip(i) }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); toggleSkip(i) } }}
+                      className="ml-auto text-[10px] uppercase tracking-widest text-muted hover:text-ink cursor-pointer select-none"
+                    >
+                      {isSkipped ? "Unskip" : "Skip"}
+                    </span>
                   </div>
                   <h3 className={`text-lg font-display leading-snug mt-1.5 line-clamp-2 ${
                     isSkipped ? "line-through text-muted" : "text-ink"
@@ -173,6 +206,12 @@ export function Dashboard({
           className="w-full py-4 rounded-xl bg-accent text-accent-fg text-lg font-semibold hover:opacity-90 transition-opacity"
         >
           Shopping list
+        </button>
+        <button
+          onClick={() => setBudgetOpen(true)}
+          className="w-full py-4 rounded-xl border-2 border-line text-ink text-lg font-semibold hover:border-ink transition-colors"
+        >
+          {actualCost !== null ? "Budget · actual recorded" : "Record actual spend"}
         </button>
         <button
           onClick={() => setPantryOpen(true)}
@@ -205,6 +244,24 @@ export function Dashboard({
         <ShoppingListView
           recipeIds={activeMeals.map(m => m.recipe_id)}
           householdSize={householdSize}
+        />
+      </Sheet>
+
+      <Sheet
+        open={budgetOpen}
+        onClose={() => setBudgetOpen(false)}
+        title="Budget"
+        contentKey="budget"
+        width="narrow"
+      >
+        <BudgetDashboard
+          planId={plan.plan_id ?? null}
+          meals={activeMeals}
+          totalCost={activeCost}
+          budget={plan.budget_gbp}
+          budgetUtilization={plan.budget_gbp > 0 ? activeCost / plan.budget_gbp : 0}
+          actualCost={actualCost}
+          onActualCostSaved={onActualCostSaved}
         />
       </Sheet>
 
