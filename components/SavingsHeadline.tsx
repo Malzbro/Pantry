@@ -46,6 +46,9 @@ function PeriodDisplay({
     ? "based on what you spent"
     : "projected from your plan"
 
+  const showBudgetLine = period.under_budget_gbp !== null && (period.budget_gbp ?? 0) > 0
+  const underBudget = period.under_budget_gbp ?? 0
+
   return (
     <div className="text-center py-2">
       <p className={`font-display text-4xl sm:text-5xl font-bold tracking-tight ${
@@ -67,6 +70,21 @@ function PeriodDisplay({
       <p className="text-xs text-muted mt-1">
         {comparisonBasis}
       </p>
+
+      {showBudgetLine && (
+        <div className="mt-4 pt-3 border-t border-line">
+          <p className="text-sm">
+            <span className={`font-mono font-medium ${
+              underBudget >= 0 ? "text-ink" : "text-red-500 dark:text-red-400"
+            }`}>
+              {gbp(Math.abs(underBudget))}
+            </span>
+            <span className="text-muted">
+              {underBudget >= 0 ? " under" : " over"} your {gbp(period.budget_gbp ?? 0)} budget
+            </span>
+          </p>
+        </div>
+      )}
     </div>
   )
 }
