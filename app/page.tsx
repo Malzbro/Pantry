@@ -10,5 +10,10 @@ export default async function Home() {
     return <LandingPage/>
   }
 
-  return <PlannerApp userEmail={user.email ?? ""} />
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+  const first = typeof meta.first_name === "string" ? meta.first_name.trim() : ""
+  const full = typeof meta.full_name === "string" ? meta.full_name.trim() : ""
+  const userName = first || full
+
+  return <PlannerApp userEmail={user.email ?? ""} userName={userName} />
 }

@@ -16,15 +16,15 @@ import { saveLastPlanRequest, loadLastPlanRequest } from "@/lib/vibes"
 
 type View = "home" | "wizard" | "plan"
 
-export function PlannerApp({ userEmail }: { userEmail: string }) {
+export function PlannerApp({ userEmail, userName }: { userEmail: string; userName: string }) {
   return (
     <SubscriptionProvider>
-      <PlannerAppInner userEmail={userEmail} />
+      <PlannerAppInner userEmail={userEmail} userName={userName} />
     </SubscriptionProvider>
   )
 }
 
-function PlannerAppInner({ userEmail }: { userEmail: string }) {
+function PlannerAppInner({ userEmail, userName }: { userEmail: string; userName: string }) {
   const { isPremium } = useSubscription()
   const [plan, setPlan] = useState<PlanResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -134,12 +134,6 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     if (savedRequest) handleSubmit(savedRequest)
   }
 
-  const openShoppingList = () => {
-    if (!plan) return
-    setView("plan")
-    setShowReveal(false)
-  }
-
   const handleCopyPlan = (requestPayload: Record<string, unknown>, changeText: string) => {
     const req = requestPayload as unknown as PlanRequest
     const merged: PlanRequest = {
@@ -181,11 +175,12 @@ function PlannerAppInner({ userEmail }: { userEmail: string }) {
     return (
       <HomePage
         userEmail={userEmail}
+        userName={userName}
+        householdSize={lastRequest?.household_size ?? savedRequest?.household_size ?? 1}
         plan={plan}
         planCreatedAt={planCreatedAt}
         savedRequest={savedRequest}
         onViewPlan={goToPlan}
-        onOpenShoppingList={openShoppingList}
         onNewPlan={openWizard}
         onQuickGenerate={quickGenerate}
         onCopyPlan={() => setCopySheetOpen(true)}
