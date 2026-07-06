@@ -56,23 +56,35 @@ def list_plans(
 
 
 def _savings_period(
-    plans_in_period: list[tuple[float, float, float | None]],
+    plans_in_period: list[tuple[datetime, float, float, float | None]],
     baseline_weekly_gbp: float,
 ) -> SavingsPeriod:
-    projected = sum(p for _, p, _ in plans_in_period)
-    actuals = [a for _, _, a in plans_in_period if a is not None]
+    # Collapse plans down to one per calendar week (the most recent). A week only
+    # gets shopped once, so counting every regeneration would multiply both the
+    # baseline and the spend and blow the savings figure out of proportion.
+    weeks: dict[tuple[int, int], tuple[float, float, float | None]] = {}
+    for created, budget, projected, actual in plans_in_period:
+        iso = created.isocalendar()
+        key = (iso[0], iso[1])
+        if key not in weeks:  # plans arrive newest-first, so first seen is latest
+            weeks[key] = (budget, projected, actual)
+    period_plans = list(weeks.values())
+
+    projected = sum(p for _, p, _ in period_plans)
+    actuals = [a for _, _, a in period_plans if a is not None]
     actual_total = sum(actuals) if actuals else None
     saved = round(projected - actual_total, 2) if actual_total is not None else None
 
-    if plans_in_period:
+    if period_plans:
         # Period spend: actual where recorded, projected otherwise.
-        spend = sum(a if a is not None else p for _, p, a in plans_in_period)
-        # Rebased savings vs an external baseline (not the user's own budget).
-        baseline_total = baseline_weekly_gbp * len(plans_in_period)
+        spend = sum(a if a is not None else p for _, p, a in period_plans)
+        # Rebased savings vs an external baseline (not the user's own budget),
+        # one week of baseline per shopped week.
+        baseline_total = baseline_weekly_gbp * len(period_plans)
         baseline_gbp = round(baseline_total, 2)
         baseline_saved_gbp = round(baseline_total - spend, 2)
         # Kept alongside as an "on track vs budget" figure (the user set the budget).
-        budget_total = sum(b for b, _, _ in plans_in_period)
+        budget_total = sum(b for b, _, _ in period_plans)
         budget_gbp = round(budget_total, 2)
         under_budget_gbp = round(budget_total - spend, 2)
     else:
@@ -85,7 +97,7 @@ def _savings_period(
         projected_gbp=round(projected, 2),
         actual_gbp=round(actual_total, 2) if actual_total is not None else None,
         saved_gbp=saved,
-        plan_count=len(plans_in_period),
+        plan_count=len(period_plans),
         baseline_gbp=baseline_gbp,
         baseline_saved_gbp=baseline_saved_gbp,
         budget_gbp=budget_gbp,
@@ -120,8 +132,8 @@ def budget_summary(
     has_any_actual = False
     recorded_actuals: list[float] = []
     household_size: int | None = None
-    week_plans: list[tuple[float, float, float | None]] = []
-    month_plans: list[tuple[float, float, float | None]] = []
+    week_plans: list[tuple[datetime, float, float, float | None]] = []
+    month_plans: list[tuple[datetime, float, float, float | None]] = []
 
     for p in rows:
         budget = p.request_payload.get("weekly_budget_gbp", 0) if p.request_payload else 0
@@ -154,9 +166,9 @@ def budget_summary(
         if created.tzinfo is None:
             created = created.replace(tzinfo=timezone.utc)
         if created >= week_start:
-            week_plans.append((budget, projected, actual))
+            week_plans.append((created, budget, projected, actual))
         if created >= month_start:
-            month_plans.append((budget, projected, actual))
+            month_plans.append((created, budget, projected, actual))
 
     # Household size for the ONS fallback: latest plan → household record → 1.
     if household_size is None:

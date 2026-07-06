@@ -6,30 +6,11 @@ import { ArrowRight, ChefHat, Package, ShoppingCart, Sparkles, Wallet } from "lu
 import type { PlanResponse, PlanRequest } from "@/lib/api"
 import { Sheet } from "./Sheet"
 import { PantrySheet } from "./PantrySheet"
+import { ShoppingListView } from "./ShoppingList"
 import { gbp } from "@/lib/utils"
 import { getMealDays } from "@/lib/planDays"
+import { getMealImage } from "@/lib/mealImage"
 import { SavingsHeadline } from "./SavingsHeadline"
-
-const CUISINE_IMAGES: Record<string, string> = {
-  british: "https://images.unsplash.com/photo-1579208030886-b1f5b7b4deb2?w=200&h=200&fit=crop",
-  italian: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=200&h=200&fit=crop",
-  indian: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop",
-  chinese: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&h=200&fit=crop",
-  mexican: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=200&h=200&fit=crop",
-  thai: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=200&h=200&fit=crop",
-  japanese: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=200&h=200&fit=crop",
-  mediterranean: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop",
-  african: "https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=200&h=200&fit=crop",
-  middle_eastern: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&h=200&fit=crop",
-  american: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=200&fit=crop",
-  korean: "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=200&h=200&fit=crop",
-  french: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&h=200&fit=crop",
-}
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200&h=200&fit=crop"
-
-function getMealImage(cuisine: string): string {
-  return CUISINE_IMAGES[cuisine.toLowerCase()] ?? FALLBACK_IMAGE
-}
 
 function firstName(email: string): string {
   const local = email.split("@")[0] ?? ""
@@ -40,11 +21,12 @@ function firstName(email: string): string {
 
 type Props = {
   userEmail: string
+  userName: string
+  householdSize: number
   plan: PlanResponse | null
   planCreatedAt: string | null
   savedRequest: PlanRequest | null
   onViewPlan: () => void
-  onOpenShoppingList: () => void
   onNewPlan: () => void
   onQuickGenerate: () => void
   onCopyPlan: () => void
@@ -52,17 +34,20 @@ type Props = {
 
 export function HomePage({
   userEmail,
+  userName,
+  householdSize,
   plan,
   planCreatedAt,
   savedRequest,
   onViewPlan,
-  onOpenShoppingList,
   onNewPlan,
   onQuickGenerate,
   onCopyPlan,
 }: Props) {
   const [pantryOpen, setPantryOpen] = useState(false)
-  const name = firstName(userEmail)
+  const [shoppingOpen, setShoppingOpen] = useState(false)
+  // Prefer the name the user set on their account; fall back to their email handle.
+  const name = userName.trim() || firstName(userEmail)
 
   return (
     <div className="max-w-2xl mx-auto px-6 animate-in fade-in duration-500">
@@ -100,7 +85,7 @@ export function HomePage({
           title="Shopping list"
           description={plan ? `${plan.meals.length} meals to shop for` : "Generate a plan to see it"}
           disabled={!plan}
-          onClick={onOpenShoppingList}
+          onClick={() => setShoppingOpen(true)}
         />
         <ActionCard
           icon={<Wallet size={20} />}
@@ -121,6 +106,21 @@ export function HomePage({
           onClick={() => setPantryOpen(true)}
         />
       </div>
+
+      <Sheet
+        open={shoppingOpen}
+        onClose={() => setShoppingOpen(false)}
+        title="Shopping list"
+        contentKey="shopping"
+        width="wide"
+      >
+        {plan && (
+          <ShoppingListView
+            recipeIds={plan.meals.map((m) => m.recipe_id)}
+            householdSize={householdSize}
+          />
+        )}
+      </Sheet>
 
       <Sheet
         open={pantryOpen}
@@ -198,13 +198,13 @@ function CurrentPlanCard({
               key={meal.recipe_id}
               className="flex items-center gap-3 p-2 rounded-lg bg-chip/40"
             >
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-black/5">
+              <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden flex-shrink-0 ring-1 ring-black/5">
                 <Image
-                  src={getMealImage(meal.cuisine)}
+                  src={getMealImage(meal)}
                   alt=""
                   fill
                   className="object-cover"
-                  sizes="48px"
+                  sizes="(min-width: 768px) 64px, 48px"
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -298,17 +298,17 @@ function ActionCard({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`text-left p-4 rounded-xl border border-line bg-bg transition-all ${
+      className={`text-left p-4 md:p-6 md:min-h-[150px] md:flex md:flex-col md:justify-center rounded-xl border border-line bg-bg transition-all ${
         disabled
           ? "opacity-50 cursor-not-allowed"
           : "hover:shadow-md hover:border-ink/40 hover:-translate-y-0.5"
       }`}
     >
-      <div className="flex items-center gap-2 mb-1.5 text-accent">
+      <div className="flex items-center gap-2 mb-1.5 md:mb-2 text-accent">
         {icon}
-        <p className="text-sm font-semibold text-ink">{title}</p>
+        <p className="text-sm md:text-base font-semibold text-ink">{title}</p>
       </div>
-      <p className="text-xs text-muted">{description}</p>
+      <p className="text-xs md:text-sm text-muted">{description}</p>
     </button>
   )
 }
